@@ -25,6 +25,133 @@ The code for the project should have the following components:
 1. Data wrangling (25%)
     * You must use a minimum of *two* datasets. 
     * All processing of the data should be handled by your `.qmd` code, including all merging and reshaping. 
+
+```{python}
+# General
+import pandas as pd
+import numpy as np
+
+# Visualization 
+import altair as alt
+
+# Geospatial data handling
+import geopandas as gpd
+
+# shiny framework
+from shiny import App, ui, render
+
+
+```
+
+```{python}
+#Importing the data - AmeriCorps 2021 CEV 
+#Source: https://data.americorps.gov/dataset/2021-CEV-Data-Current-Population-Survey-Civic-Enga/rgh8-g2uc/about_data
+#Will need to include google drive/dropbox link since > 300MB
+
+cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
+
+vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+
+
+```
+Most relevant variables to focus on:
+
+Frequency and Type of Volunteering:
+PES16: Did the respondent spend any time volunteering for any organization in the past 12 months?
+PES16D: Frequency of volunteering (e.g., basically every day, a few times a week).
+PTS16E: Approximate hours spent volunteering.
+Political Engagement:
+PES2: How often the respondent discussed political, societal, or local issues with friends or family.
+PES5: How often these discussions occurred with neighbors.
+PES13: Contact or visits to a public official to express opinions.
+PES14: Boycotting or buying products based on political values or business practices.
+Civic Participation and Group Membership:
+PES15: Belonging to groups, organizations, or associations in the past 12 months.
+PES15A: Number of such groups or organizations.
+Neighbor and Community Interaction:
+PES7: Participation in activities to improve their neighborhood or community.
+Voting Behavior:
+PES11: Whether the respondent voted in the last local elections.
+Social Media and News Consumption:
+PES9: Posting views about political, societal, or local issues on the internet or social media.
+PES10: Frequency of consuming news related to political or societal issues.
+
+Basic Demographics
+Age: PRTAGE (Person's age)
+Gender: PESEX (Sex of the respondent)
+Race/Ethnicity: PTDTRACE (Detailed race and Hispanic origin)
+Marital Status: PEMARITL (Marital status of the respondent)
+Household Composition: HRNUMHOU (Number of persons in the household)
+
+Potential Confounding Variables
+Income: HEFAMINC (Household family income level)
+Education: PEEDUCA (Highest level of school completed)
+Urban/Rural Status: GTMETSTA (Metropolitan or non-metropolitan status)
+Community Involvement: PES7 (Participation in neighborhood or community activities)
+Social Media Use: PES9 (Posting views about political, societal, or local issues on the internet or social media)
+
+This code will filter out the 400+ variables in the dataset to only the relevant ones.
+
+First we need to merge the two datasets:
+
+```{python}
+vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
+
+#I found out the data type is int64 for one df and object for the other
+
+cev_2021_raw = cev_2021_raw.astype(str)
+vcl_supplement_raw = vcl_supplement_raw.astype(str)
+
+#This finds all the variables in common between the two for a merge
+common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
+
+
+
+cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
+
+cev_all_2021.head(5)
+
+```
+```{python}
+selected_variables = [
+    #Household Identifier Index
+    "hrhhid", "hrhhid2",
+    # Frequency and Type of Volunteering
+    "pes16", "pes16d", "pts16e",
+    # Political Engagement
+    "pes2", "pes5", "pes13", "pes14",
+    # Civic Participation and Group Membership
+    "pes15", "pes15a",
+    # Neighbor and Community Interaction
+    "pes7",
+    # Voting Behavior
+    "pes11",
+    # Social Media and News Consumption
+    "pes9", "pes10",
+    # Basic Demographics
+    "prtage", "pesex", "ptdtrace", "pemaritl", "hrnumhou",
+    # Potential Confounding Variables
+    "hefaminc", "peeduca", "gtmetsta", "pes7", "pes9"
+]
+
+cev_all_2021_filter = cev_all_2021[selected_variables]
+
+#Check that there are no duplicates in hrhhid
+
+# Remove duplicates in hrhhid
+cev_all_2021_filter = cev_all_2021_filter.drop_duplicates(subset=['hrhhid'])
+
+
+```
+
+```{python}
+#testworkspace
+
+list_vars_sup = pd.DataFrame(vcl_supplement_raw.columns)
+
+```
+
+
 2. Plotting (25%)
     * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
     * As well as one `shiny` app with one dynamic plot
