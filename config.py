@@ -59,6 +59,7 @@ rename_mapping = {
 }
 
 # Renaming pes16
+# In the past 12 months, did [you/[NAME]] spend any time volunteering for any organization or association?
 
 pes16_dict = {
     '1': 'Yes',
@@ -73,4 +74,18 @@ pes16_dict = {
     '.d': 'Do Not Know',
     'Yes': 'Yes',
     'No': 'No'
+}
+
+pes16d_dict = {
+    '-9': 'No Answer',
+    '-3': 'Refusal',
+    '-2': 'Do Not Know',
+    '-1': 'Not in Universe',
+    '1': 'Basically Every Day',
+    '2': 'A Few Times a Week',
+    '3': 'A Few Times a Month',
+    '4': 'Once a Month',
+    '5': 'Less Than Once a Month',
+    '6': 'Not at All',
+    None: 'Missing'
 }

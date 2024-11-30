@@ -50,11 +50,7 @@ from shiny import App, ui, render
 
 cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
 
-cev_2019_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2019_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241129.csv", encoding = 'utf-8')
-
 vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
-
-vcl_2019_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep19pub.csv")
 
 ```
 Most relevant variables to focus on:
@@ -139,20 +135,17 @@ cev_all_2021_filter.rename(columns=rename_mapping, inplace=True)
 ```
 
 More Data Cleaning - Replacing numbers/strings with more descriptive data
+Background: the CEV data is such that all the values are in numeric codes with various values. These "codes" don't really mean anything without context, so we need to replace them with more readable values.
+By using the provided CEV data dictionary, we can generate our own dictionaries and use .map() to swap out the values to make them more readable.
 
 ```{python}
-#Background: the CEV data is such that all the values are in numeric codes with various values. These "codes" don't really mean anything without context, so we need to replace them with more readable values.
-# Test script to debug pes16_dict import
-import config
-print(config.__file__)  # Check the path to ensure correct file is loaded
-
-from config import pes16_dict
-print(pes16_dict)  # Ensure the dictionary is accessible
-
 
 ```
 
 ```{python}
+from config import pes16_dict, pes16d_dict
+
+
 #Replace FIPS codes with states
 from us import states
 
@@ -162,19 +155,20 @@ cev_all_2021_filter['US State'] = pd.to_numeric(cev_all_2021_filter['US State'],
 
 cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(fips_to_state)
 
-```
-
-```{python}
-# Replace "Volunteered Past Year" data (pes16)
-
-# In the past 12 months, did [you/[NAME]] spend any time volunteering for any organization or association?
-from config import pes16_dict
+#Replace "Volunteered Past Year" data (pes16)
 
 cev_all_2021_filter['Volunteered_Past_Year'] = cev_all_2021_filter['Volunteered_Past_Year'].map(pes16_dict)
 
+#Replace "Volunteering Frequency" (pes16d)
+cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteered_Past_Year'].map(pes16d_dict)
+
 
 ```
+```{python}
+#Test chunk only delete later
 
+print(cev_all_2021_filter['Volunteering_Frequency'].unique())
+```
 
 2. Plotting (25%)
     * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
