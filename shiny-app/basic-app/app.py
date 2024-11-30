@@ -1,4 +1,7 @@
 from shiny import App, render, ui
+import pandas as pd
+import altair as alt
+
 
 app_ui = ui.page_fluid(
     ui.panel_title("Hello Shiny!"),
@@ -8,8 +11,9 @@ app_ui = ui.page_fluid(
 
 
 def server(input, output, session):
-    @render.text
-    def txt():
+    @output
+    @render.plot
+    def main():
         return f"n*2 is {input.n() * 2}"
 
 

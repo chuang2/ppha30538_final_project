@@ -112,9 +112,15 @@ cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="o
 cev_all_2021.head(5)
 
 ```
+
+
 ```{python}
+# We can use a config.py file to keep this readable.
+
+from config import selected_variables, rename_mapping
+
 selected_variables = [
-    #Household Identifier Index
+    # Household Identifier Index
     "hrhhid", "hrhhid2",
     # Frequency and Type of Volunteering
     "pes16", "pes16d", "pts16e",
@@ -129,18 +135,46 @@ selected_variables = [
     # Social Media and News Consumption
     "pes9", "pes10",
     # Basic Demographics
-    "prtage", "pesex", "ptdtrace", "pemaritl", "hrnumhou",
+    "prtage", "pesex", "ptdtrace", "pemaritl", "hrnumhou", "gestfips",
     # Potential Confounding Variables
     "hefaminc", "peeduca", "gtmetsta", "pes7", "pes9"
 ]
 
-cev_all_2021_filter = cev_all_2021[selected_variables]
+# selected_variables = ['hrhhid', 'hrhhid2', etc.]
+# This chooses the variables we want from the merged raw data
 
-#Check that there are no duplicates in hrhhid
+# rename_mapping = "hrhhid": "Household_ID", "hrhhid2": "Household_ID_2", etc.
+# Renaming the variables for clarity
+
+
+cev_all_2021_filter = cev_all_2021[selected_variables]
+cev_all_2021_filter.rename(columns=rename_mapping, inplace=True)
+
+# Check that there are no duplicates in hrhhid
 
 # Remove duplicates in hrhhid
-cev_all_2021_filter = cev_all_2021_filter.drop_duplicates(subset=['hrhhid'])
+cev_all_2021_filter = cev_all_2021_filter.drop_duplicates(subset=[
+                                                          'Household_ID'])
 
+
+```
+
+More Data Cleaning - Replacing numbers/strings with more descriptive data
+
+```{python}
+#Background: the CEV data is such that all the values are in numeric codes with various values. These "codes" don't really mean anything without context, so we need to replace them with more readable values.
+
+```
+
+```{python}
+#Replace FIPS codes with states
+from us import states
+
+fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
+
+cev_all_2021_filter['US State'] = pd.to_numeric(cev_all_2021_filter['US State'], errors='coerce')
+
+cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(fips_to_state)
 
 ```
 
