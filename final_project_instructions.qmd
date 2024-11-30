@@ -120,6 +120,7 @@ cev_all_2021.head(5)
 
 from config import selected_variables, rename_mapping
 
+
 # selected_variables = ['hrhhid', 'hrhhid2', etc.]
 # This chooses the variables we want from the merged raw data
 
@@ -127,7 +128,9 @@ from config import selected_variables, rename_mapping
 # Renaming the variables for clarity
 
 
-cev_all_2021_filter = cev_all_2021[selected_variables]
+cev_all_2021_filter = cev_all_2021[selected_variables].copy()
+#copy avoids potentially modifying original dataframe
+
 cev_all_2021_filter.rename(columns=rename_mapping, inplace=True)
 
 
@@ -143,31 +146,41 @@ By using the provided CEV data dictionary, we can generate our own dictionaries 
 ```
 
 ```{python}
-from config import pes16_dict, pes16d_dict
+#Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
+import importlib
+import config
+importlib.reload(config)
 
 
-#Replace FIPS codes with states
+from config import pes16_dict, pes16d_dict, pts16e_dict
+
+# Replace FIPS codes with states
 from us import states
 
 fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
 
-cev_all_2021_filter['US State'] = pd.to_numeric(cev_all_2021_filter['US State'], errors='coerce')
+cev_all_2021_filter['US State'] = pd.to_numeric(
+    cev_all_2021_filter['US State'], errors='coerce')
 
-cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(fips_to_state)
+cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(
+    fips_to_state)
 
-#Replace "Volunteered Past Year" data (pes16)
-
+# Replace "Volunteered Past Year" data (pes16)
 cev_all_2021_filter['Volunteered_Past_Year'] = cev_all_2021_filter['Volunteered_Past_Year'].map(pes16_dict)
 
-#Replace "Volunteering Frequency" (pes16d)
-cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteered_Past_Year'].map(pes16d_dict)
+# Replace "Volunteering Frequency" (pes16d)
+cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteering_Frequency'].map(pes16d_dict)
+
+# Replace "Hours Spent Volunteering" (pts16e)
+cev_all_2021_filter['Hours_Spent_Volunteering'] = cev_all_2021_filter['Hours_Spent_Volunteering'].map(pts16e_dict)
+
 
 
 ```
 ```{python}
 #Test chunk only delete later
 
-print(cev_all_2021_filter['Volunteering_Frequency'].unique())
+print(cev_all_2021_filter['Hours_Spent_Volunteering'].unique())
 ```
 
 2. Plotting (25%)

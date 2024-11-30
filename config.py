@@ -58,7 +58,16 @@ rename_mapping = {
     "gtmetsta": "Urban_Rural_Status"
 }
 
-# Renaming pes16
+# Default dict - common map values for all variables
+default_dict = {
+    '-9': 'No Answer',
+    '-3': 'Refused',
+    '-2': 'Do Not Know',
+    '-1': 'Not in Universe',
+}
+
+
+# Renaming pes16 - Volunteered Past Year
 # In the past 12 months, did [you/[NAME]] spend any time volunteering for any organization or association?
 
 pes16_dict = {
@@ -76,6 +85,7 @@ pes16_dict = {
     'No': 'No'
 }
 
+# Renaming pes16d - Volunteering Frequency
 pes16d_dict = {
     '-9': 'No Answer',
     '-3': 'Refusal',
@@ -89,3 +99,8 @@ pes16d_dict = {
     '6': 'Not at All',
     None: 'Missing'
 }
+
+
+pts16e_dict = default_dict.copy()
+for i in range(1, 501):
+    pts16e_dict[str(i)] = i

@@ -52,7 +52,6 @@ cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/pr
 
 vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
 
-
 ```
 Most relevant variables to focus on:
 
@@ -106,39 +105,21 @@ vcl_supplement_raw = vcl_supplement_raw.astype(str)
 common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
 
 
-
 cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
 
 cev_all_2021.head(5)
 
+#Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
+
 ```
 
 
+
 ```{python}
-# We can use a config.py file to keep this readable.
+# We can use a config.py file to keep this readable. Full details are in the config.py file
 
 from config import selected_variables, rename_mapping
 
-selected_variables = [
-    # Household Identifier Index
-    "hrhhid", "hrhhid2",
-    # Frequency and Type of Volunteering
-    "pes16", "pes16d", "pts16e",
-    # Political Engagement
-    "pes2", "pes5", "pes13", "pes14",
-    # Civic Participation and Group Membership
-    "pes15", "pes15a",
-    # Neighbor and Community Interaction
-    "pes7",
-    # Voting Behavior
-    "pes11",
-    # Social Media and News Consumption
-    "pes9", "pes10",
-    # Basic Demographics
-    "prtage", "pesex", "ptdtrace", "pemaritl", "hrnumhou", "gestfips",
-    # Potential Confounding Variables
-    "hefaminc", "peeduca", "gtmetsta", "pes7", "pes9"
-]
 
 # selected_variables = ['hrhhid', 'hrhhid2', etc.]
 # This chooses the variables we want from the merged raw data
@@ -150,34 +131,53 @@ selected_variables = [
 cev_all_2021_filter = cev_all_2021[selected_variables]
 cev_all_2021_filter.rename(columns=rename_mapping, inplace=True)
 
-# Check that there are no duplicates in hrhhid
-
-# Remove duplicates in hrhhid
-cev_all_2021_filter = cev_all_2021_filter.drop_duplicates(subset=[
-                                                          'Household_ID'])
 
 
 ```
 
 More Data Cleaning - Replacing numbers/strings with more descriptive data
+Background: the CEV data is such that all the values are in numeric codes with various values. These "codes" don't really mean anything without context, so we need to replace them with more readable values.
+By using the provided CEV data dictionary, we can generate our own dictionaries and use .map() to swap out the values to make them more readable.
 
 ```{python}
-#Background: the CEV data is such that all the values are in numeric codes with various values. These "codes" don't really mean anything without context, so we need to replace them with more readable values.
 
 ```
 
 ```{python}
-#Replace FIPS codes with states
+# Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
 from us import states
+from config import pes16_dict, pes16d_dict
+import importlib
+import config
+importlib.reload(config)
+
+
+# Replace FIPS codes with states
 
 fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
 
-cev_all_2021_filter['US State'] = pd.to_numeric(cev_all_2021_filter['US State'], errors='coerce')
+cev_all_2021_filter['US State'] = pd.to_numeric(
+    cev_all_2021_filter['US State'], errors='coerce')
 
-cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(fips_to_state)
+cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(
+    fips_to_state)
+
+# Replace "Volunteered Past Year" data (pes16)
+
+cev_all_2021_filter['Volunteered_Past_Year'] = cev_all_2021_filter['Volunteered_Past_Year'].map(
+    pes16_dict)
+
+# Replace "Volunteering Frequency" (pes16d)
+cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteering_Frequency'].map(
+    pes16d_dict)
+
 
 ```
+```{python}
+#Test chunk only delete later
 
+print(cev_all_2021_filter['Volunteering_Frequency'].unique())
+```
 
 2. Plotting (25%)
     * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
