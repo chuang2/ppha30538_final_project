@@ -1,3 +1,5 @@
+# Note: PRSUPINT = had an interview with subject
+
 selected_variables = [
     # Household Identifier Index
     "hrhhid", "hrhhid2",
@@ -54,4 +56,21 @@ rename_mapping = {
     "hefaminc": "Family_Income_Level",
     "peeduca": "Education_Level",
     "gtmetsta": "Urban_Rural_Status"
+}
+
+# Renaming pes16
+
+pes16_dict = {
+    '1': 'Yes',
+    '2': 'No',
+    '-1': 'Not in Universe',
+    '-3': 'Refusal',
+    '-2': 'Do Not Know',
+    '-9': 'No Answer',
+    '.u': 'No Answer',
+    '.r': 'Refusal',
+    '.n': 'Not in Universe',
+    '.d': 'Do Not Know',
+    'Yes': 'Yes',
+    'No': 'No'
 }
