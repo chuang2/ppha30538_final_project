@@ -48,10 +48,13 @@ from shiny import App, ui, render
 #Source: https://data.americorps.gov/dataset/2021-CEV-Data-Current-Population-Survey-Civic-Enga/rgh8-g2uc/about_data
 #Will need to include google drive/dropbox link since > 300MB
 
-cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
+#cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
 
-vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+cev_2021_raw = pd.read_csv("C:/Users/andre/Documents/GitHub\DAP_2_Temp_HW_Holder/Data/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241127.csv")
 
+#vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+
+vcl_supplement_raw = pd.read_csv("C:/Users/andre/Documents/GitHub/DAP_2_Temp_HW_Holder/Data/sep21pub.csv")
 
 ```
 Most relevant variables to focus on:
