@@ -66,7 +66,6 @@ PES13: Contact or visits to a public official to express opinions.
 PES14: Boycotting or buying products based on political values or business practices.
 Civic Participation and Group Membership:
 PES15: Belonging to groups, organizations, or associations in the past 12 months.
-PES15A: Number of such groups or organizations.
 Neighbor and Community Interaction:
 PES7: Participation in activities to improve their neighborhood or community.
 Voting Behavior:
@@ -260,10 +259,24 @@ cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Sta
     gtmetsta_dict)
 
 ```
-```{python}
-#Test chunk only delete later
 
-print(cev_all_2021_filter['Community_Improvement_Activities'].unique())
+Lastly, export the cleaned data as a csv for plotting purposes
+
+```{python}
+import os
+from pathlib import Path
+
+shiny_data_path = Path("shiny-app/basic-app/data")
+
+# Create directory if it doesn't exist
+shiny_data_path.mkdir(parents=True, exist_ok=True)
+
+# Save dataset
+cev_all_2021_filter.to_csv(
+    shiny_data_path / "cev_2021_cleaned.csv", index=False)
+
+print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
+
 ```
 
 2. Plotting (25%)
