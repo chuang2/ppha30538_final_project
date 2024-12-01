@@ -105,19 +105,17 @@ vcl_supplement_raw = vcl_supplement_raw.astype(str)
 common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
 
 
+
 cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
 
 cev_all_2021.head(5)
 
 #Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
 
-```
-
-
+# We can use a config.py file to keep this readable. Full details are in the config.py file
+``` 
 
 ```{python}
-# We can use a config.py file to keep this readable. Full details are in the config.py file
-
 from config import selected_variables, rename_mapping
 
 
@@ -133,26 +131,44 @@ cev_all_2021_filter = cev_all_2021[selected_variables].copy()
 
 cev_all_2021_filter.rename(columns=rename_mapping, inplace=True)
 
-
-
+#Debugging: removing duplicate column(s)
+cev_all_2021_filter = cev_all_2021_filter.loc[:, ~cev_all_2021_filter.columns.duplicated()]
 ```
 
-More Data Cleaning - Replacing numbers/strings with more descriptive data
-Background: the CEV data is such that all the values are in numeric codes with various values. These "codes" don't really mean anything without context, so we need to replace them with more readable values.
-By using the provided CEV data dictionary, we can generate our own dictionaries and use .map() to swap out the values to make them more readable.
+
+The data is a mix of numeric code and qualitative input, so we need to keep the qualitative input while mapping only numeric codes. The qualitative input is outside of the data dictionary, so it won't get picked up by any mapping functions and will be transmuted into NaN data. We will make a function that identifies all the values in the data that aren't picked up by our data dictionaries in config.py.
+
+For example, here's a sample from config.py:
+
+Renaming pes16 - Volunteered Past Year
+In the past 12 months, did [you/[NAME]] spend any time volunteering for any organization or association?
+
+pes16_dict = {
+    '1': 'Yes',
+    '2': 'No',
+    '-1': 'Not in Universe',
+    '-3': 'Refusal',
+    '-2': 'Do Not Know',
+    '-9': 'No Answer',
+    '.u': 'No Answer',
+    '.r': 'Refusal',
+    '.n': 'Not in Universe',
+    '.d': 'Do Not Know'
+}
+
+If there are some entries in this column that are already coded "Yes" or "No", our existing mapping won't account for them and will turn them into NANs. That's not desirable. We want to catch those and account for them.
 
 ```{python}
+#For testing purposes, delete later
+cev_pre_clean_test = cev_all_2021_filter.copy()
 
-```
 
-```{python}
 # Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
-from us import states
-from config import pes16_dict, pes16d_dict, pts16e_dict, pes2_dict, pes5_dict, pes13_dict, pes14_dict, pes15_dict, pes15a_dict, pes7_dict, pes11_dict, pes9_dict, pes10_dict, prtage_dict, pesex_dict, ptdtrace_dict, pemaritl_dict, hrnumhou_dict, hefaminc_dict, peeduca_dict, gtmetsta_dict
+# Import and reload config
 import importlib
 import config
 importlib.reload(config)
-
+from config import *
 
 # Replace FIPS codes with states
 
@@ -196,9 +212,6 @@ cev_all_2021_filter['Boycott_Based_On_Values'] = cev_all_2021_filter['Boycott_Ba
 cev_all_2021_filter['Belonged_To_Groups'] = cev_all_2021_filter['Belonged_To_Groups'].map(
     pes15_dict)
 
-# Replace "Number of Groups" data (pes15a)
-cev_all_2021_filter['Number_Of_Groups'] = cev_all_2021_filter['Number_Of_Groups'].map(
-    pes15a_dict)
 
 # Replace "Community Improvement Activities" data (pes7)
 cev_all_2021_filter['Community_Improvement_Activities'] = cev_all_2021_filter['Community_Improvement_Activities'].map(
@@ -238,12 +251,19 @@ cev_all_2021_filter['Household_Size'] = cev_all_2021_filter['Household_Size'].ma
 cev_all_2021_filter['Family_Income_Level'] = cev_all_2021_filter['Family_Income_Level'].map(
     hefaminc_dict)
 
+# Replace "Education Level" data (peeduca_dict)
+cev_all_2021_filter['Education_Level'] = cev_all_2021_filter['Education_Level'].map(
+    peeduca_dict)
+
+# Replace "Urban Rural Status" data (gtmetsta_dict)
+cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(
+    gtmetsta_dict)
 
 ```
 ```{python}
 #Test chunk only delete later
 
-print(cev_all_2021_filter['Hours_Spent_Volunteering'].unique())
+print(cev_all_2021_filter['Community_Improvement_Activities'].unique())
 ```
 
 2. Plotting (25%)
