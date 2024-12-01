@@ -174,6 +174,53 @@ cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteerin
 # Replace "Hours Spent Volunteering" (pts16e)
 cev_all_2021_filter['Hours_Spent_Volunteering'] = cev_all_2021_filter['Hours_Spent_Volunteering'].map(pts16e_dict)
 
+# Replace "Discussed Issues with Friends/Family" data (pes2)
+cev_all_2021_filter['Discussed_Issues_With_Friends_Family'] = cev_all_2021_filter['Discussed_Issues_With_Friends_Family'].map(pes2_dict)
+
+# Replace "Discussed Issues with Neighbors" data (pes5)
+cev_all_2021_filter['Discussed_Issues_With_Neighbors'] = cev_all_2021_filter['Discussed_Issues_With_Neighbors'].map(pes5_dict)
+
+# Replace "Contacted Public Official" data (pes13)
+cev_all_2021_filter['Contacted_Public_Official'] = cev_all_2021_filter['Contacted_Public_Official'].map(pes13_dict)
+
+# Replace "Boycott Based on Values" data (pes14)
+cev_all_2021_filter['Boycott_Based_On_Values'] = cev_all_2021_filter['Boycott_Based_On_Values'].map(pes14_dict)
+
+# Replace "Belonged to Groups" data (pes15)
+cev_all_2021_filter['Belonged_To_Groups'] = cev_all_2021_filter['Belonged_To_Groups'].map(pes15_dict)
+
+# Replace "Number of Groups" data (pes15a)
+cev_all_2021_filter['Number_Of_Groups'] = cev_all_2021_filter['Number_Of_Groups'].map(pes15a_dict)
+
+# Replace "Community Improvement Activities" data (pes7)
+cev_all_2021_filter['Community_Improvement_Activities'] = cev_all_2021_filter['Community_Improvement_Activities'].map(pes7_dict)
+
+# Replace "Voted in Local Election" data (pes11)
+cev_all_2021_filter['Voted_In_Local_Election'] = cev_all_2021_filter['Voted_In_Local_Election'].map(pes11_dict)
+
+# Replace "Posted Views on Social Media" data (pes9)
+cev_all_2021_filter['Posted_Views_On_Social_Media'] = cev_all_2021_filter['Posted_Views_On_Social_Media'].map(pes9_dict)
+
+# Replace "Frequency of News Consumption" data (pes10)
+cev_all_2021_filter['Frequency_Of_News_Consumption'] = cev_all_2021_filter['Frequency_Of_News_Consumption'].map(pes10_dict)
+
+# Replace "Age" data (prtage)
+cev_all_2021_filter['Age'] = cev_all_2021_filter['Age'].map(prtage_dict)
+
+# Replace "Gender" data (pesex)
+cev_all_2021_filter['Gender'] = cev_all_2021_filter['Gender'].map(pesex_dict)
+
+# Replace "Race/Ethnicity" data (ptdtrace)
+cev_all_2021_filter['Race_Ethnicity'] = cev_all_2021_filter['Race_Ethnicity'].map(ptdtrace_dict)
+
+# Replace "Marital Status" data (pemaritl)
+cev_all_2021_filter['Marital_Status'] = cev_all_2021_filter['Marital_Status'].map(pemaritl_dict)
+
+# Replace "Household Size" data (hrnumhou)
+cev_all_2021_filter['Household_Size'] = cev_all_2021_filter['Household_Size'].map(hrnumhou_dict)
+
+# Replace "Family Income Level" data (hefaminc)
+cev_all_2021_filter['Family_Income_Level'] = cev_all_2021_filter['Family_Income_Level'].map(hefaminc_dict)
 
 
 ```
