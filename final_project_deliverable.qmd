@@ -40,7 +40,7 @@ import geopandas as gpd
 # shiny framework
 from shiny import App, ui, render
 
-
+alt.data_transformers.enable("vegafusion")
 ```
 
 ```{python}
@@ -181,6 +181,107 @@ cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(fips_to_st
 
 ```
 
+Read in data from American National Election Studies
+```{python}
+polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
+```
+
+Important elements of the ANES Codebook
+
+1. Note on geography:
+
+"Some variables have been removed from the full release dataset in order to protect
+ respondent confidentiality....
+ Examples of restricted variables include, but are not limited to: detailed geography,
+ detailed religious denomination..."
+
+2. Understanding the variables:
+" The Codebook includes the following information, where applicable, for each
+ variable: the variable name (all variable names start with a “V”, and summary
+ variables end with the suffix “x”), variable label (with “PRE:” indicating that it is from
+ the pre-election study), question wording/variable meaning, response/code values
+ and meanings, universe (where only a subset of respondents appear in a variable,
+ which respondents those should be; note that universes are not included for most
+ summary variables), associated survey question(s), information about whether
+ randomization was used, interviewer instructions, and any other notes about the
+ variable"
+
+
+Subset for the useful columns
+
+List 1: This list contains only pre-election data, it is designed to capture variables
+covering some geographic information (V201011, V201013a, V201013b, V201014a, V201014b)
+
+List 2: This list contains only pre-election data, it is designed to capture variables
+covering information about self-assessments of political positioning
+(i.e. left, right, center)
+```{python}
+#list 1
+subset_list_1 = [column for column in polarization if "V2010" in column]
+
+#list 2
+subset_list_2 = [column for column in polarization if "V2012" in column]
+
+#put the lists together
+#make a loop 
+
+#empty receiver
+subset_list = []
+
+#loop 1
+for value in subset_list_1:
+        subset_list.append(value)
+
+#loop 2
+for value in subset_list_2:
+        subset_list.append(value)                    
+
+#subset 
+sub_polarization = polarization.filter(items= subset_list)
+
+#add a column that just equals 1 to use for tracking the number
+#of entries
+sub_polarization["Observations"] = 1
+```
+
+Some more data cleaning
+```{python}
+#Make variables more clear
+
+crosswalk_polar = pd.DataFrame({
+    "Self_Rating_(V201200)":[-9, -8, 1, 2, 3, 4, 5, 6, 7, 99],
+    "Titles_(V201200)": [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly conservative",
+        "Conservative",
+        "Extremely conservative",
+        "Haven’t thought much about this"
+    ]
+    })
+
+#merge using crosswalk
+sub_polarization.merge(crosswalk_polar, left_on = "V201200", right_on = "Self_Rating_(V201200)")
+
+```
+
+Exploratory graph of polarization
+```{python}
+alt.Chart(sub_polarization).mark_bar().encode(
+    alt.X("V201200:N"),
+    alt.Y("Observations")
+)
+
+
+
+
+```
+
+
+Citation:  American National Election Studies. 2021. ANES 2020 Time Series 
+Study Full Release [dataset and documentation]. July 19, 2021 
+version. www.electionstudies.org 
 
 2. Plotting (25%)
     * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
