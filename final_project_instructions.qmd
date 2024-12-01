@@ -308,6 +308,27 @@ version. www.electionstudies.org
 
 ```
 
+Exploratory graph of polarization
+```{python}
+#create list for graph to sort on 
+sorting_list = [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly conservative",
+        "Conservative",
+        "Extremely conservative",
+        "Haven’t thought much about this"
+    ]
+
+alt.Chart(sub_polarization).mark_bar().encode(
+    alt.X("Titles_(V201200):N", sort = sorting_list),
+    alt.Y("Observations"),
+    alt.Color("Titles_(V201200)")
+)
+
+
+```
 
 4. Reproductibility (10%)
     * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see "Final Repository" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments
