@@ -245,6 +245,21 @@ sub_polarization["Observations"] = 1
 ```
 
 Some more data cleaning
+
+Analyzing Question V201200, which is a question asking:
+
+"Where would you place yourself on this scale, or haven’t you
+ thought much about this?
+ Value Labels-9. Refused -8. Don’t know 
+1. Extremely liberal 
+2. Liberal 
+3. Slightly liberal 
+4. Moderate; middle of the road 
+5. Slightly conservative 
+6. Conservative 
+7. Extremely conservative 
+99. Haven’t thought much about this"
+
 ```{python}
 #Make variables more clear
 
@@ -262,21 +277,36 @@ crosswalk_polar = pd.DataFrame({
     })
 
 #merge using crosswalk
-sub_polarization.merge(crosswalk_polar, left_on = "V201200", right_on = "Self_Rating_(V201200)")
+sub_polarization = sub_polarization.merge(crosswalk_polar, left_on = "V201200", right_on = "Self_Rating_(V201200)")
 
 ```
 
 Exploratory graph of polarization
 ```{python}
+#create list for graph to sort on 
+sorting_list = [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly conservative",
+        "Conservative",
+        "Extremely conservative",
+        "Haven’t thought much about this"
+    ]
+
 alt.Chart(sub_polarization).mark_bar().encode(
-    alt.X("V201200:N"),
-    alt.Y("Observations")
+    alt.X("Titles_(V201200):N", sort = sorting_list),
+    alt.Y("Observations"),
+    alt.Color("Titles_(V201200)")
 )
 
 
 
 
 ```
+
+
+
 
 
 Citation:  American National Election Studies. 2021. ANES 2020 Time Series 
@@ -310,6 +340,9 @@ version. www.electionstudies.org
 * Display your static plots, and briefly describe them and your Shiny app. Discuss the policy implications of your findings.
 * Finish with a discussion of directions for future work. 
 * The top of your writeup should include the names of all group members, their respective sections, and Github user names.
+
+
+
 
 ## Presentation (15%)
 * On the day of the presentation, one of the group members will be *randomly selected* to give a *8-minute in-class presentation*. All group members must be present.
