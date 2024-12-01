@@ -457,39 +457,3 @@ gtmetsta_dict = {
 }
 
 gtmetsta_dict = enhance_mapping_dictionary(gtmetsta_dict)
-
-# Test section only delete later
-
-
-def run_dictionary_tests():
-    """
-    Runs comprehensive tests on enhanced dictionaries to verify case-insensitive mappings
-    and special code handling. Can be called after import to check dictionary integrity.
-    """
-    test_cases = {
-        'pes16_dict': ['Yes', 'YES', 'yes', 'No', 'NO', 'no', '1', '-1'],
-        'pes16d_dict': ['Basically Every Day', 'BASICALLY EVERY DAY', 'basically every day', '1', '-1'],
-        'pesex_dict': ['Male', 'MALE', 'male', 'Female', 'FEMALE', 'female', '1', '2'],
-        'gtmetsta_dict': ['Metropolitan', 'METROPOLITAN', 'metropolitan', 'Nonmetropolitan', '1', '-1'],
-        'peeduca_dict': ['High School Graduate', 'HIGH SCHOOL GRADUATE', 'high school graduate', '39', '-1'],
-        'hefaminc_dict': ['Less Than $5,000', 'LESS THAN $5,000', 'less than $5,000', '1', '-1']
-    }
-
-    print("\nVerifying Dictionary Mappings:")
-    print("=" * 50)
-
-    for dict_name, cases in test_cases.items():
-        print(f"\nTesting {dict_name}:")
-        print("-" * 30)
-        dict_obj = globals()[dict_name]
-
-        for case in cases:
-            mapped_value = dict_obj.get(case, 'NOT FOUND')
-            print(f"Input: '{case}' → Output: '{mapped_value}'")
-
-        print(f"Total mappings in dictionary: {len(dict_obj)}")
-
-
-# Keep the original __main__ check for direct script execution
-if __name__ == "__main__":
-    run_dictionary_tests()
