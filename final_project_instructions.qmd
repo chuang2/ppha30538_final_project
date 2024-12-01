@@ -146,16 +146,15 @@ By using the provided CEV data dictionary, we can generate our own dictionaries 
 ```
 
 ```{python}
-#Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
+# Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
+from us import states
+from config import pes16_dict, pes16d_dict, pts16e_dict, pes2_dict, pes5_dict, pes13_dict, pes14_dict, pes15_dict, pes15a_dict, pes7_dict, pes11_dict, pes9_dict, pes10_dict, prtage_dict, pesex_dict, ptdtrace_dict, pemaritl_dict, hrnumhou_dict, hefaminc_dict, peeduca_dict, gtmetsta_dict
 import importlib
 import config
 importlib.reload(config)
 
 
-from config import pes16_dict, pes16d_dict, pts16e_dict
-
 # Replace FIPS codes with states
-from us import states
 
 fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
 
@@ -166,43 +165,56 @@ cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(
     fips_to_state)
 
 # Replace "Volunteered Past Year" data (pes16)
-cev_all_2021_filter['Volunteered_Past_Year'] = cev_all_2021_filter['Volunteered_Past_Year'].map(pes16_dict)
+cev_all_2021_filter['Volunteered_Past_Year'] = cev_all_2021_filter['Volunteered_Past_Year'].map(
+    pes16_dict)
 
 # Replace "Volunteering Frequency" (pes16d)
-cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteering_Frequency'].map(pes16d_dict)
+cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteering_Frequency'].map(
+    pes16d_dict)
 
 # Replace "Hours Spent Volunteering" (pts16e)
-cev_all_2021_filter['Hours_Spent_Volunteering'] = cev_all_2021_filter['Hours_Spent_Volunteering'].map(pts16e_dict)
+cev_all_2021_filter['Hours_Spent_Volunteering'] = cev_all_2021_filter['Hours_Spent_Volunteering'].map(
+    pts16e_dict)
 
 # Replace "Discussed Issues with Friends/Family" data (pes2)
-cev_all_2021_filter['Discussed_Issues_With_Friends_Family'] = cev_all_2021_filter['Discussed_Issues_With_Friends_Family'].map(pes2_dict)
+cev_all_2021_filter['Discussed_Issues_With_Friends_Family'] = cev_all_2021_filter['Discussed_Issues_With_Friends_Family'].map(
+    pes2_dict)
 
 # Replace "Discussed Issues with Neighbors" data (pes5)
-cev_all_2021_filter['Discussed_Issues_With_Neighbors'] = cev_all_2021_filter['Discussed_Issues_With_Neighbors'].map(pes5_dict)
+cev_all_2021_filter['Discussed_Issues_With_Neighbors'] = cev_all_2021_filter['Discussed_Issues_With_Neighbors'].map(
+    pes5_dict)
 
 # Replace "Contacted Public Official" data (pes13)
-cev_all_2021_filter['Contacted_Public_Official'] = cev_all_2021_filter['Contacted_Public_Official'].map(pes13_dict)
+cev_all_2021_filter['Contacted_Public_Official'] = cev_all_2021_filter['Contacted_Public_Official'].map(
+    pes13_dict)
 
 # Replace "Boycott Based on Values" data (pes14)
-cev_all_2021_filter['Boycott_Based_On_Values'] = cev_all_2021_filter['Boycott_Based_On_Values'].map(pes14_dict)
+cev_all_2021_filter['Boycott_Based_On_Values'] = cev_all_2021_filter['Boycott_Based_On_Values'].map(
+    pes14_dict)
 
 # Replace "Belonged to Groups" data (pes15)
-cev_all_2021_filter['Belonged_To_Groups'] = cev_all_2021_filter['Belonged_To_Groups'].map(pes15_dict)
+cev_all_2021_filter['Belonged_To_Groups'] = cev_all_2021_filter['Belonged_To_Groups'].map(
+    pes15_dict)
 
 # Replace "Number of Groups" data (pes15a)
-cev_all_2021_filter['Number_Of_Groups'] = cev_all_2021_filter['Number_Of_Groups'].map(pes15a_dict)
+cev_all_2021_filter['Number_Of_Groups'] = cev_all_2021_filter['Number_Of_Groups'].map(
+    pes15a_dict)
 
 # Replace "Community Improvement Activities" data (pes7)
-cev_all_2021_filter['Community_Improvement_Activities'] = cev_all_2021_filter['Community_Improvement_Activities'].map(pes7_dict)
+cev_all_2021_filter['Community_Improvement_Activities'] = cev_all_2021_filter['Community_Improvement_Activities'].map(
+    pes7_dict)
 
 # Replace "Voted in Local Election" data (pes11)
-cev_all_2021_filter['Voted_In_Local_Election'] = cev_all_2021_filter['Voted_In_Local_Election'].map(pes11_dict)
+cev_all_2021_filter['Voted_In_Local_Election'] = cev_all_2021_filter['Voted_In_Local_Election'].map(
+    pes11_dict)
 
 # Replace "Posted Views on Social Media" data (pes9)
-cev_all_2021_filter['Posted_Views_On_Social_Media'] = cev_all_2021_filter['Posted_Views_On_Social_Media'].map(pes9_dict)
+cev_all_2021_filter['Posted_Views_On_Social_Media'] = cev_all_2021_filter['Posted_Views_On_Social_Media'].map(
+    pes9_dict)
 
 # Replace "Frequency of News Consumption" data (pes10)
-cev_all_2021_filter['Frequency_Of_News_Consumption'] = cev_all_2021_filter['Frequency_Of_News_Consumption'].map(pes10_dict)
+cev_all_2021_filter['Frequency_Of_News_Consumption'] = cev_all_2021_filter['Frequency_Of_News_Consumption'].map(
+    pes10_dict)
 
 # Replace "Age" data (prtage)
 cev_all_2021_filter['Age'] = cev_all_2021_filter['Age'].map(prtage_dict)
@@ -211,16 +223,20 @@ cev_all_2021_filter['Age'] = cev_all_2021_filter['Age'].map(prtage_dict)
 cev_all_2021_filter['Gender'] = cev_all_2021_filter['Gender'].map(pesex_dict)
 
 # Replace "Race/Ethnicity" data (ptdtrace)
-cev_all_2021_filter['Race_Ethnicity'] = cev_all_2021_filter['Race_Ethnicity'].map(ptdtrace_dict)
+cev_all_2021_filter['Race_Ethnicity'] = cev_all_2021_filter['Race_Ethnicity'].map(
+    ptdtrace_dict)
 
 # Replace "Marital Status" data (pemaritl)
-cev_all_2021_filter['Marital_Status'] = cev_all_2021_filter['Marital_Status'].map(pemaritl_dict)
+cev_all_2021_filter['Marital_Status'] = cev_all_2021_filter['Marital_Status'].map(
+    pemaritl_dict)
 
 # Replace "Household Size" data (hrnumhou)
-cev_all_2021_filter['Household_Size'] = cev_all_2021_filter['Household_Size'].map(hrnumhou_dict)
+cev_all_2021_filter['Household_Size'] = cev_all_2021_filter['Household_Size'].map(
+    hrnumhou_dict)
 
 # Replace "Family Income Level" data (hefaminc)
-cev_all_2021_filter['Family_Income_Level'] = cev_all_2021_filter['Family_Income_Level'].map(hefaminc_dict)
+cev_all_2021_filter['Family_Income_Level'] = cev_all_2021_filter['Family_Income_Level'].map(
+    hefaminc_dict)
 
 
 ```
