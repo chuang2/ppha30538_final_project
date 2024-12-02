@@ -169,6 +169,8 @@ import config
 importlib.reload(config)
 from config import *
 
+from us import states
+
 # Replace FIPS codes with states
 
 fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
