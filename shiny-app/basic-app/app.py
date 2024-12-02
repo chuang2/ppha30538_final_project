@@ -59,11 +59,12 @@ app_ui = ui.page_fluid(
         ),
         ui.div(
             output_widget("volunteer_plot"),
-            style="margin-bottom: 100px;"  # Add significant margin below the plot
+            style="margin-bottom: 100px;"
         ),
         ui.div(
             ui.output_text("exclusion_stats_output"),
-            style="padding: 20px 0;"  # Add padding above and below the stats
+            # Add padding above and below the stats so this doesn't get covered up
+            style="padding: 20px 0;"
         )
     )
 )
@@ -79,9 +80,9 @@ def server(input, output, session):
     def processed_data():
         selected_column = get_column_name(input.variable())
 
-        # Special handling for age variable- binning makes data easier through the pd.cut() method
+        # Attribution: ChatGPT
+        # Asked "how to bin age-related data using pandas for easier bar-graphing", suggested using pd.cut()
         if selected_column == "Age":
-            # First convert Age to numeric, coerce errors to NaN
             numeric_age = pd.to_numeric(
                 cev_all_2021_filter['Age'], errors='coerce')
 
@@ -103,7 +104,12 @@ def server(input, output, session):
             "Education Level": "Analysis of volunteering rates by educational attainment",
             "Urban/Rural Status": "Comparison of volunteering rates between urban and rural areas",
             "Community Involvement": "Volunteering rates by level of community participation",
-            "Social Media Use": "Volunteering rates by social media engagement level"
+            "Social Media Use": "Volunteering rates by social media engagement level",
+            "Age": "Analysis of volunteering rates by age group",
+            "Gender": "Analysis of volunteering rates by gender",
+            "Race/Ethnicity": "Analysis of volunteering rates by race and ethnicity",
+            "Marital Status": "Analysis of volunteering rates by marital status"
+
         }
         return descriptions[selected_var]
 
