@@ -1,9 +1,17 @@
 # Note: PRSUPINT = had an interview with subject
 
-# I found out that the data dictionaries don't account for existing qualitative data, so
-# this is a function that will help augment our existing dictionaries to capture the times
-# where people ignore the numeric codes and write the qualitative data directly.
+
 def enhance_mapping_dictionary(original_dict):
+    '''
+    I found out that the data dictionaries don't account for existing qualitative data, so 
+    this is a function that will help augment our existing dictionaries to capture the times
+    where people ignore the numeric codes and write the qualitative data directly.
+    For example, if a column has a bunch of "1", "2, "5", "Female", "Metropolitan", etc., it 
+    will convert the numeric codes while keeping the qualitative data.
+
+    This will augment all of the existing dictionaries below rather than having to manually 
+    change all of them.
+    '''
     enhanced_dict = original_dict.copy()
     special_codes = {'-9', '-3', '-2', '-1', '.', '.u', '.r', '.n', '.d'}
     valid_values = {v for k, v in original_dict.items()
