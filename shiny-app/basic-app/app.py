@@ -1,9 +1,8 @@
-from shiny import App, render, ui
+from shiny import App, render, ui, reactive
 from shinywidgets import render_altair, output_widget
 import pandas as pd
 import altair as alt
 
-import os
 from pathlib import Path
 
 
@@ -16,11 +15,17 @@ cev_all_2021_filter = pd.read_csv(data_path)
 exclude_categories = ['No Answer', 'Refused', 'Do Not Know', 'Not in Universe']
 
 variable_mapping = {
-    "Family_Income_Level": "Household Income",
+    "Household_Size": "Household Size",
+    "US State": "US State",
+    "Family_Income_Level": "Family Income",
     "Education_Level": "Education Level",
     "Urban_Rural_Status": "Urban/Rural Status",
     "Community_Improvement_Activities": "Community Involvement",
-    "Posted_Views_On_Social_Media": "Social Media Use"
+    "Posted_Views_On_Social_Media": "Social Media Use",
+    "Age": "Age",
+    "Gender": "Gender",
+    "Race_Ethnicity": "Race/Ethnicity",
+    "Marital_Status": "Marital Status"
 }
 
 
@@ -70,6 +75,25 @@ def server(input, output, session):
     def get_column_name(display_name):
         return {v: k for k, v in variable_mapping.items()}[display_name]
 
+    @reactive.Calc
+    def processed_data():
+        selected_column = get_column_name(input.variable())
+
+        # Special handling for age variable- binning makes data easier through the pd.cut() method
+        if selected_column == "Age":
+            # First convert Age to numeric, coerce errors to NaN
+            numeric_age = pd.to_numeric(
+                cev_all_2021_filter['Age'], errors='coerce')
+
+            age_groups = pd.cut(
+                numeric_age,
+                bins=[0, 25, 35, 45, 55, 65, 100],
+                labels=['18-25', '26-35', '36-45', '46-55', '56-65', '65+']
+            )
+            return cev_all_2021_filter.assign(Age=age_groups)
+
+        return cev_all_2021_filter
+
     @output
     @render.text
     def variable_description():
@@ -86,10 +110,11 @@ def server(input, output, session):
     @output
     @render_altair
     def volunteer_plot():
+        # Get processed data with any special handling (like age groups)
+        data = processed_data()
         selected_column = get_column_name(input.variable())
 
-        filtered_data = cev_all_2021_filter[~cev_all_2021_filter[selected_column].isin(
-            exclude_categories)]
+        filtered_data = data[~data[selected_column].isin(exclude_categories)]
 
         volunteer_data = (filtered_data
                           .groupby(selected_column)['Volunteered_Past_Year']
@@ -110,7 +135,8 @@ def server(input, output, session):
                     sort=alt.EncodingSortField(
                     field='Volunteer_Rate',
                     order='descending'
-                    ) if input.sort_bars() else None),
+                    ) if input.sort_bars() else None,
+                    axis=alt.Axis(labelAngle=45)),
             y=alt.Y('Volunteer_Rate', title="Percentage Volunteered"),
             tooltip=[
                 alt.Tooltip(input.variable()),
@@ -127,7 +153,7 @@ def server(input, output, session):
     @output
     @render.text
     def exclusion_stats_output():
-        return calculate_exclusion_stats("Education_Level")
+        return calculate_exclusion_stats(get_column_name(input.variable()))
 
 
 app = App(app_ui, server)
