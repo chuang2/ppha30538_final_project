@@ -1,8 +1,6 @@
 # Note: PRSUPINT = had an interview with subject
 
-# I found out that the data dictionaries don't account for existing qualitative data, so
-# this is a function that will help augment our existing dictionaries to capture the times
-# where people ignore the numeric codes and write the qualitative data directly.
+# I found out that the data dictionaries don't account for
 def enhance_mapping_dictionary(original_dict):
     enhanced_dict = original_dict.copy()
     special_codes = {'-9', '-3', '-2', '-1', '.', '.u', '.r', '.n', '.d'}
@@ -15,6 +13,18 @@ def enhance_mapping_dictionary(original_dict):
         enhanced_dict[value.lower()] = value
 
     return enhanced_dict
+
+
+# Test dictionary
+test_dict = {
+    '-9': 'No Answer',
+    '-1': 'Not in Universe',
+    '1': 'Metropolitan',
+    '2': 'Non-Metropolitan'
+}
+
+# Enhance immediately
+test_dict = enhance_mapping_dictionary(test_dict)
 
 
 selected_variables = [
@@ -100,8 +110,6 @@ pes16_dict = {
     'No': 'No'
 }
 
-pes16_dict = enhance_mapping_dictionary(pes16_dict)
-
 # Renaming pes16d - Volunteering Frequency
 pes16d_dict = {
     '-9': 'No Answer',
@@ -117,7 +125,6 @@ pes16d_dict = {
     None: 'Missing'
 }
 
-pes16d_dict = enhance_mapping_dictionary(pes16d_dict)
 
 pts16e_dict = default_dict.copy()
 for i in range(1, 501):
@@ -143,7 +150,6 @@ pes2_dict = {
     '.d': 'Do Not Know',
 }
 
-pes2_dict = enhance_mapping_dictionary(pes2_dict)
 # Renaming pes5 - Discussed Issues with Neighbors
 # [In the past 12 months,] how often did [you/[NAME]] discuss political, societal, or local issues with [your/his/her] neighbors?
 pes5_dict = {
@@ -163,8 +169,6 @@ pes5_dict = {
     '.d': 'Do Not Know',
 }
 
-pes5_dict = enhance_mapping_dictionary(pes5_dict)
-
 # Renaming pes13 - Contacted Public Official
 # [In the past 12 months,] did [you/[NAME]] contact or visit a public official – at any level of government – to express [your/his/her] opinion?
 
@@ -181,8 +185,6 @@ pes13_dict = {
     '.d': 'Do Not Know',
 }
 
-pes13_dict = enhance_mapping_dictionary(pes13_dict)
-
 # Renaming pes14 - Boycott Based on Values
 # [In the past 12 months,] Did [you/[NAME]] buy or boycott products or services based on the political values or business practices of that company?
 pes14_dict = {
@@ -198,8 +200,6 @@ pes14_dict = {
     '.d': 'Do Not Know',
 }
 
-pes14_dict = enhance_mapping_dictionary(pes14_dict)
-
 # Renaming pes15 - Belonged to Groups
 # [In the past 12 months,] did [you/[NAME]] belong to any groups, organizations, or associations?
 pes15_dict = {
@@ -214,8 +214,6 @@ pes15_dict = {
     '.n': 'Not in Universe',
     '.d': 'Do Not Know',
 }
-
-pes15_dict = enhance_mapping_dictionary(pes15_dict)
 
 # Renaming pes7 - Community Improvement Activities
 # [In the past 12 months,] did [you/[NAME]] get together with other people from [your/his/her] neighborhood to do something positive for [your/his/her] neighborhood or the community?
@@ -233,8 +231,6 @@ pes7_dict = {
     None: 'Missing',
 }
 
-pes7_dict = enhance_mapping_dictionary(pes7_dict)
-
 # Renaming pes11 - Voted in Local Election
 # [In the past 12 months,] did [you/[NAME]] vote in the last local elections, such as for mayor or school board?
 pes11_dict = {
@@ -249,8 +245,6 @@ pes11_dict = {
     '.n': 'Not in Universe',
     '.d': 'Do Not Know',
 }
-
-pes11_dict = enhance_mapping_dictionary(pes11_dict)
 
 # Renaming pes9 - Posted Views on Social Media
 # [In the past 12 months,] how often did [you/[NAME]] post [your/his/her] views about political, societal, or local issues on the internet or social media?
@@ -271,8 +265,6 @@ pes9_dict = {
     '.d': 'Do Not Know',
 }
 
-pes9_dict = enhance_mapping_dictionary(pes9_dict)
-
 # Renaming pes10 - Frequency of News Consumption
 # [In the past 12 months,] how often did [you/[NAME]] read, watch or listen to news or information about political, societal, or local issues?
 pes10_dict = {
@@ -292,8 +284,6 @@ pes10_dict = {
     '.d': 'Do Not Know',
 }
 
-pes10_dict = enhance_mapping_dictionary(pes10_dict)
-
 # Renaming prtage - Age
 prtage_dict = default_dict.copy()
 for i in range(1, 80):
@@ -312,8 +302,6 @@ pesex_dict = {
     '2': 'Female',
     '.': 'Missing'
 }
-
-pesex_dict = enhance_mapping_dictionary(pesex_dict)
 
 # Renaming ptdtrace - Race/Ethnicity
 ptdtrace_dict = {
@@ -353,8 +341,6 @@ ptdtrace_dict = {
     '.d': 'Do Not Know',
 }
 
-ptdtrace_dict = enhance_mapping_dictionary(ptdtrace_dict)
-
 # Renaming pemaritl - Marital Status
 pemaritl_dict = {
     '-9': 'No Answer',
@@ -373,8 +359,6 @@ pemaritl_dict = {
     '.n': 'Not in Universe',
     '.d': 'Do Not Know',
 }
-
-pemaritl_dict = enhance_mapping_dictionary(pemaritl_dict)
 
 # Renaming hrnumhou - Household Size
 hrnumhou_dict = default_dict.copy()
@@ -410,8 +394,6 @@ hefaminc_dict = {
     '.d': 'Do Not Know',
 }
 
-hefaminc_dict = enhance_mapping_dictionary(hefaminc_dict)
-
 # Renaming peeduca - Education Level
 peeduca_dict = {
     '-9': 'No Answer',
@@ -441,9 +423,6 @@ peeduca_dict = {
     '.d': 'Do Not Know',
 }
 
-peeduca_dict = enhance_mapping_dictionary(peeduca_dict)
-
-
 # Renaming gtmetsta - Urban/Rural Status
 gtmetsta_dict = {
     '-9': 'No Answer',
@@ -455,5 +434,3 @@ gtmetsta_dict = {
     '3': 'Not Identified',
     '.': 'Missing'
 }
-
-gtmetsta_dict = enhance_mapping_dictionary(gtmetsta_dict)

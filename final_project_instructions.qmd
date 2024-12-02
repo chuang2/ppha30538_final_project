@@ -66,7 +66,6 @@ PES13: Contact or visits to a public official to express opinions.
 PES14: Boycotting or buying products based on political values or business practices.
 Civic Participation and Group Membership:
 PES15: Belonging to groups, organizations, or associations in the past 12 months.
-PES15A: Number of such groups or organizations.
 Neighbor and Community Interaction:
 PES7: Participation in activities to improve their neighborhood or community.
 Voting Behavior:
@@ -105,20 +104,19 @@ vcl_supplement_raw = vcl_supplement_raw.astype(str)
 common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
 
 
+
 cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
 
 cev_all_2021.head(5)
 
 #Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
 
-```
-
-
+# We can use a config.py file to keep this readable. Full details are in the config.py file
+``` 
 
 ```{python}
-# We can use a config.py file to keep this readable. Full details are in the config.py file
-
 from config import selected_variables, rename_mapping
+
 
 # selected_variables = ['hrhhid', 'hrhhid2', etc.]
 # This chooses the variables we want from the merged raw data
@@ -127,47 +125,158 @@ from config import selected_variables, rename_mapping
 # Renaming the variables for clarity
 
 
-cev_all_2021_filter = cev_all_2021[selected_variables]
+cev_all_2021_filter = cev_all_2021[selected_variables].copy()
+#copy avoids potentially modifying original dataframe
+
 cev_all_2021_filter.rename(columns=rename_mapping, inplace=True)
 
-
-
+#Debugging: removing duplicate column(s)
+cev_all_2021_filter = cev_all_2021_filter.loc[:, ~cev_all_2021_filter.columns.duplicated()]
 ```
 
-More Data Cleaning - Replacing numbers/strings with more descriptive data
-Background: the CEV data is such that all the values are in numeric codes with various values. These "codes" don't really mean anything without context, so we need to replace them with more readable values.
-By using the provided CEV data dictionary, we can generate our own dictionaries and use .map() to swap out the values to make them more readable.
+
+The data is a mix of numeric code and qualitative input, so we need to keep the qualitative input while mapping only numeric codes. The qualitative input is outside of the data dictionary, so it won't get picked up by any mapping functions and will be transmuted into NaN data. We will make a function that identifies all the values in the data that aren't picked up by our data dictionaries in config.py.
+
+For example, here's a sample from config.py:
+
+Renaming pes16 - Volunteered Past Year
+In the past 12 months, did [you/[NAME]] spend any time volunteering for any organization or association?
+
+pes16_dict = {
+    '1': 'Yes',
+    '2': 'No',
+    '-1': 'Not in Universe',
+    '-3': 'Refusal',
+    '-2': 'Do Not Know',
+    '-9': 'No Answer',
+    '.u': 'No Answer',
+    '.r': 'Refusal',
+    '.n': 'Not in Universe',
+    '.d': 'Do Not Know'
+}
+
+If there are some entries in this column that are already coded "Yes" or "No", our existing mapping won't account for them and will turn them into NANs. That's not desirable. We want to catch those and account for them.
 
 ```{python}
-
-```
-
-```{python}
-from config import pes16_dict, pes16d_dict
+#For testing purposes, delete later
+cev_pre_clean_test = cev_all_2021_filter.copy()
 
 
-#Replace FIPS codes with states
-from us import states
+# Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
+# Import and reload config
+import importlib
+import config
+importlib.reload(config)
+from config import *
+
+# Replace FIPS codes with states
 
 fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
 
-cev_all_2021_filter['US State'] = pd.to_numeric(cev_all_2021_filter['US State'], errors='coerce')
+cev_all_2021_filter['US State'] = pd.to_numeric(
+    cev_all_2021_filter['US State'], errors='coerce')
 
-cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(fips_to_state)
+cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(
+    fips_to_state)
 
-#Replace "Volunteered Past Year" data (pes16)
+# Replace "Volunteered Past Year" data (pes16)
+cev_all_2021_filter['Volunteered_Past_Year'] = cev_all_2021_filter['Volunteered_Past_Year'].map(
+    pes16_dict)
 
-cev_all_2021_filter['Volunteered_Past_Year'] = cev_all_2021_filter['Volunteered_Past_Year'].map(pes16_dict)
+# Replace "Volunteering Frequency" (pes16d)
+cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteering_Frequency'].map(
+    pes16d_dict)
 
-#Replace "Volunteering Frequency" (pes16d)
-cev_all_2021_filter['Volunteering_Frequency'] = cev_all_2021_filter['Volunteered_Past_Year'].map(pes16d_dict)
+# Replace "Hours Spent Volunteering" (pts16e)
+cev_all_2021_filter['Hours_Spent_Volunteering'] = cev_all_2021_filter['Hours_Spent_Volunteering'].map(
+    pts16e_dict)
 
+# Replace "Discussed Issues with Friends/Family" data (pes2)
+cev_all_2021_filter['Discussed_Issues_With_Friends_Family'] = cev_all_2021_filter['Discussed_Issues_With_Friends_Family'].map(
+    pes2_dict)
+
+# Replace "Discussed Issues with Neighbors" data (pes5)
+cev_all_2021_filter['Discussed_Issues_With_Neighbors'] = cev_all_2021_filter['Discussed_Issues_With_Neighbors'].map(
+    pes5_dict)
+
+# Replace "Contacted Public Official" data (pes13)
+cev_all_2021_filter['Contacted_Public_Official'] = cev_all_2021_filter['Contacted_Public_Official'].map(
+    pes13_dict)
+
+# Replace "Boycott Based on Values" data (pes14)
+cev_all_2021_filter['Boycott_Based_On_Values'] = cev_all_2021_filter['Boycott_Based_On_Values'].map(
+    pes14_dict)
+
+# Replace "Belonged to Groups" data (pes15)
+cev_all_2021_filter['Belonged_To_Groups'] = cev_all_2021_filter['Belonged_To_Groups'].map(
+    pes15_dict)
+
+
+# Replace "Community Improvement Activities" data (pes7)
+cev_all_2021_filter['Community_Improvement_Activities'] = cev_all_2021_filter['Community_Improvement_Activities'].map(
+    pes7_dict)
+
+# Replace "Voted in Local Election" data (pes11)
+cev_all_2021_filter['Voted_In_Local_Election'] = cev_all_2021_filter['Voted_In_Local_Election'].map(
+    pes11_dict)
+
+# Replace "Posted Views on Social Media" data (pes9)
+cev_all_2021_filter['Posted_Views_On_Social_Media'] = cev_all_2021_filter['Posted_Views_On_Social_Media'].map(
+    pes9_dict)
+
+# Replace "Frequency of News Consumption" data (pes10)
+cev_all_2021_filter['Frequency_Of_News_Consumption'] = cev_all_2021_filter['Frequency_Of_News_Consumption'].map(
+    pes10_dict)
+
+# Replace "Age" data (prtage)
+cev_all_2021_filter['Age'] = cev_all_2021_filter['Age'].map(prtage_dict)
+
+# Replace "Gender" data (pesex)
+cev_all_2021_filter['Gender'] = cev_all_2021_filter['Gender'].map(pesex_dict)
+
+# Replace "Race/Ethnicity" data (ptdtrace)
+cev_all_2021_filter['Race_Ethnicity'] = cev_all_2021_filter['Race_Ethnicity'].map(
+    ptdtrace_dict)
+
+# Replace "Marital Status" data (pemaritl)
+cev_all_2021_filter['Marital_Status'] = cev_all_2021_filter['Marital_Status'].map(
+    pemaritl_dict)
+
+# Replace "Household Size" data (hrnumhou)
+cev_all_2021_filter['Household_Size'] = cev_all_2021_filter['Household_Size'].map(
+    hrnumhou_dict)
+
+# Replace "Family Income Level" data (hefaminc)
+cev_all_2021_filter['Family_Income_Level'] = cev_all_2021_filter['Family_Income_Level'].map(
+    hefaminc_dict)
+
+# Replace "Education Level" data (peeduca_dict)
+cev_all_2021_filter['Education_Level'] = cev_all_2021_filter['Education_Level'].map(
+    peeduca_dict)
+
+# Replace "Urban Rural Status" data (gtmetsta_dict)
+cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(
+    gtmetsta_dict)
 
 ```
-```{python}
-#Test chunk only delete later
 
-print(cev_all_2021_filter['Volunteering_Frequency'].unique())
+Lastly, export the cleaned data as a csv for plotting purposes
+
+```{python}
+import os
+from pathlib import Path
+
+shiny_data_path = Path("shiny-app/basic-app/data")
+
+# Create directory if it doesn't exist
+shiny_data_path.mkdir(parents=True, exist_ok=True)
+
+# Save dataset
+cev_all_2021_filter.to_csv(
+    shiny_data_path / "cev_2021_cleaned.csv", index=False)
+
+print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
+
 ```
 
 
