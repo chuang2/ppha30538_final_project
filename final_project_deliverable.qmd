@@ -48,12 +48,19 @@ from shiny import App, ui, render
 #Source: https://data.americorps.gov/dataset/2021-CEV-Data-Current-Population-Survey-Civic-Enga/rgh8-g2uc/about_data
 #Will need to include google drive/dropbox link since > 300MB
 
-cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
+#Charles' path
+#cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
 
-vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+#vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+
+#Justine path
+cev_2021_raw = pd.read_csv("/Users/justinesilverstein/Desktop/ppha30538_final_project/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241201.csv", encoding = 'utf-8')
+
+vcl_supplement_raw = pd.read_csv("/Users/justinesilverstein/Desktop/ppha30538_final_project/sep21pub.csv")
 
 
 ```
+
 Most relevant variables to focus on:
 
 Frequency and Type of Volunteering:
@@ -185,7 +192,14 @@ cev_all_2021_filter['US State'] = cev_all_2021_filter['US State'].map(fips_to_st
         * You can also add additional dynamic plots into your app to substitute for a static plot. So, a `shiny` app with 3 dynamic plots will count for full credit.
 
 ```{python}
+#Issue with any plot is that bulk of entries are nonresponses so sample is skewed depending on who responded.
+```
 
+```{python}
+#Frequency of volunteer from a given state
+#frequency of volunteers by hours and location? rural vs urban areas
+
+#if focusing on polarization, better to focus on where volunteers are coming from 
 ```
 
 
