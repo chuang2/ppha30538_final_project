@@ -279,6 +279,135 @@ print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
 
 ```
 
+
+Read in data from American National Election Studies
+```{python}
+polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
+```
+
+Important elements of the ANES Codebook
+
+1. Note on geography:
+
+"Some variables have been removed from the full release dataset in order to protect
+ respondent confidentiality....
+ Examples of restricted variables include, but are not limited to: detailed geography,
+ detailed religious denomination..."
+
+2. Understanding the variables:
+" The Codebook includes the following information, where applicable, for each
+ variable: the variable name (all variable names start with a “V”, and summary
+ variables end with the suffix “x”), variable label (with “PRE:” indicating that it is from
+ the pre-election study), question wording/variable meaning, response/code values
+ and meanings, universe (where only a subset of respondents appear in a variable,
+ which respondents those should be; note that universes are not included for most
+ summary variables), associated survey question(s), information about whether
+ randomization was used, interviewer instructions, and any other notes about the
+ variable"
+
+
+Subset for the useful columns
+
+List 1: This list contains only pre-election data, it is designed to capture variables
+covering some geographic information (V201011, V201013a, V201013b, V201014a, V201014b)
+
+List 2: This list contains only pre-election data, it is designed to capture variables
+covering information about self-assessments of political positioning
+(i.e. left, right, center)
+```{python}
+#list 1
+subset_list_1 = [column for column in polarization if "V2010" in column]
+
+#list 2
+subset_list_2 = [column for column in polarization if "V2012" in column]
+
+#put the lists together
+#make a loop 
+
+#empty receiver
+subset_list = []
+
+#loop 1
+for value in subset_list_1:
+        subset_list.append(value)
+
+#loop 2
+for value in subset_list_2:
+        subset_list.append(value)                    
+
+#subset 
+sub_polarization = polarization.filter(items= subset_list)
+
+#add a column that just equals 1 to use for tracking the number
+#of entries
+sub_polarization["Observations"] = 1
+```
+
+Some more data cleaning
+
+Analyzing Question V201200, which is a question asking:
+
+"Where would you place yourself on this scale, or haven’t you
+ thought much about this?
+ Value Labels-9. Refused -8. Don’t know 
+1. Extremely liberal 
+2. Liberal 
+3. Slightly liberal 
+4. Moderate; middle of the road 
+5. Slightly conservative 
+6. Conservative 
+7. Extremely conservative 
+99. Haven’t thought much about this"
+
+```{python}
+#Make variables more clear
+
+crosswalk_polar = pd.DataFrame({
+    "Self_Rating_(V201200)":[-9, -8, 1, 2, 3, 4, 5, 6, 7, 99],
+    "Titles_(V201200)": [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly conservative",
+        "Conservative",
+        "Extremely conservative",
+        "Haven’t thought much about this"
+    ]
+    })
+
+#merge using crosswalk
+sub_polarization = sub_polarization.merge(crosswalk_polar, left_on = "V201200", right_on = "Self_Rating_(V201200)")
+
+```
+
+Make dataframe where all data is aggregated by state, and then
+we can show correlation between measure of polarity and 
+the share of respondents in a state who did volunteer work.
+
+Clean data to produce some geographic information
+
+V201013a
+```{python}
+#Replace FIPS codes with states
+from us import states
+
+fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
+
+sub_polarization['US State'] = pd.to_numeric(sub_polarization['V201013a'], errors='coerce')
+
+sub_polarization['US State'] = sub_polarization['US State'].map(fips_to_state)
+
+
+
+
+```
+
+
+Citation:  American National Election Studies. 2021. ANES 2020 Time Series 
+Study Full Release [dataset and documentation]. July 19, 2021 
+version. www.electionstudies.org 
+
+
 2. Plotting (25%)
     * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
     * As well as one `shiny` app with one dynamic plot
@@ -288,6 +417,27 @@ print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
 
 ```
 
+Exploratory graph of polarization
+```{python}
+#create list for graph to sort on 
+sorting_list = [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly conservative",
+        "Conservative",
+        "Extremely conservative",
+        "Haven’t thought much about this"
+    ]
+
+alt.Chart(sub_polarization).mark_bar().encode(
+    alt.X("Titles_(V201200):N", sort = sorting_list),
+    alt.Y("Observations"),
+    alt.Color("Titles_(V201200)")
+)
+
+
+```
 
 4. Reproductibility (10%)
     * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see "Final Repository" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments
