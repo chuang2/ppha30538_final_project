@@ -29,13 +29,24 @@ variable_mapping = {
 }
 
 
-def calculate_exclusion_stats(category):
+def calculate_exclusion_stats(category, metric_type=None):
     '''
-    Counts the number and proportion of responses that turn up 
+    Counts the number and proportion of responses that are exclusded, nonresponse, or out of universe, etc.
     '''
-    excluded = cev_all_2021_filter[
-        cev_all_2021_filter[category].isin(exclude_categories)]
-    total_count = len(cev_all_2021_filter)
+
+    data = cev_all_2021_filter.copy()
+
+    excluded_category = data[data[category].isin(exclude_categories)]
+
+    # For engagement score, also count insufficient data
+    if metric == "engagement":
+        excluded_engagement = data[pd.isna(data['political_engagement_score'])]
+        excluded = pd.concat(
+            [excluded_category, excluded_engagement]).drop_duplicates()
+    else:
+        excluded = excluded_category
+
+    total_count = len(data)
     excluded_count = len(excluded)
     excluded_percent = (excluded_count / total_count) * 100
 
@@ -54,9 +65,17 @@ app_ui = ui.page_fluid(
                 "Select Variable to Analyze",
                 choices=list(variable_mapping.values())
             ),
+            ui.input_select(
+                "metric",
+                "Select Metric",
+                choices={
+                    "volunteer": "Volunteering Rates",
+                    "engagement": "Political Engagement Score"
+                }
+            ),
             ui.input_checkbox(
                 "sort_bars",
-                "Sort bars by volunteering rates",
+                "Sort bars by selected metric",
                 value=False
             )
         ),
@@ -77,7 +96,7 @@ def server(input, output, session):
 
     def get_column_name(display_name):
         '''
-        Helper function to get column name from display name
+        Helper function to get column name from display name dict
         '''
         return {v: k for k, v in variable_mapping.items()}[display_name]
 
@@ -131,35 +150,53 @@ def server(input, output, session):
 
         filtered_data = data[~data[selected_column].isin(exclude_categories)]
 
-        volunteer_data = (filtered_data
-                          .groupby(selected_column)['Volunteered_Past_Year']
-                          .agg(lambda x: (x == "Yes").mean() * 100)
-                          .reset_index()
-                          .rename(columns={
-                              selected_column: input.variable(),
-                              'Volunteered_Past_Year': 'Volunteer_Rate'})
-                          )
+        if input.metric() == "volunteer":
+
+            metric_data = (filtered_data
+                           .groupby(selected_column)['Volunteered_Past_Year']
+                           .agg(lambda x: (x == "Yes").mean() * 100)
+                           .reset_index()
+                           .rename(columns={
+                               selected_column: input.variable(),
+                               'Volunteered_Past_Year': 'Metric_Value'})
+                           )
+
+            y_title = "Percentage Volunteered"
+            tooltip_title = "Volunteer Rate (%)"
+
+        else:
+            # Engagement score calculation
+            metric_data = (filtered_data
+                           .groupby(selected_column)['political_engagement_score']
+                           .mean()
+                           .reset_index()
+                           .rename(columns={
+                               selected_column: input.variable(),
+                               'political_engagement_score': 'Metric_Value'})
+                           )
+            y_title = "Average Political Engagement Score"
+            tooltip_title = "Engagement Score"
+
         # Sort if requested
         if input.sort_bars():
-            volunteer_data = volunteer_data.sort_values(
-                'Volunteer_Rate', ascending=False)
+            metric_data = metric_data.sort_values(
+                'Metric_Value', ascending=False)
 
-        # Chart creation also needs to be indented
-        chart = alt.Chart(volunteer_data).mark_bar().encode(
+        chart = alt.Chart(metric_data).mark_bar().encode(
             x=alt.X(input.variable(), title=input.variable(),
                     sort=alt.EncodingSortField(
-                    field='Volunteer_Rate',
+                    field='Metric_Value',
                     order='descending'
                     ) if input.sort_bars() else None,
                     axis=alt.Axis(labelAngle=45)),
-            y=alt.Y('Volunteer_Rate', title="Percentage Volunteered"),
+            y=alt.Y('Metric_Value', title="Percentage Volunteered"),
             tooltip=[
                 alt.Tooltip(input.variable()),
-                alt.Tooltip('Volunteer_Rate',
-                            title='Volunteer Rate (%)', format='.1f')
+                alt.Tooltip('Metric_Value',
+                            title=tooltip_title, format='.1f')
             ]
         ).properties(
-            title=f"Volunteering Rates by {input.variable()}",
+            title=f"{y_title} by {input.variable()}",
             width=600,
             height=300
         )
@@ -168,7 +205,9 @@ def server(input, output, session):
     @output
     @render.text
     def exclusion_stats_output():
-        return calculate_exclusion_stats(get_column_name(input.variable()))
+        selected_column = get_column_name(input.variable())
+        metric_type = input.metric()
+        return calculate_exclusion_stats(selected_column, metric_type)
 
 
 app = App(app_ui, server)

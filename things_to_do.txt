@@ -1,0 +1,3 @@
+#Things to do
+-Add feature to limit number of bars on graphs
+-Add text explaining how the political engagement score was derived, with caveats
