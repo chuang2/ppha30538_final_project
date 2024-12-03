@@ -457,6 +457,7 @@ chart = alt.Chart(frequency_counts).mark_bar().encode(
 )
 
 chart.show()
+chart.save('chart1.png', format='png')
 ```
 
 # Plot to show Volunteering Frequency based on if one voted on the local election
@@ -503,6 +504,7 @@ chart = alt.Chart(combined_counts).mark_bar().encode(
 )
 
 chart.show()
+chart.save('chart2.png', format='png')
 ```
 
 # If they voted or not in the local election but no orange
@@ -549,7 +551,7 @@ chart = alt.Chart(combined_counts).mark_bar().encode(
 )
 
 chart.show()
-
+chart.save('chart3.png', format='png')
 ```
 
 # error graph, delete later
@@ -568,110 +570,276 @@ chart = alt.Chart(filtered_data).mark_boxplot().encode(
 chart.show()
 ```
 
+
 # use to show size of volunteering frequency per news consumption?
+
 ```{python}
-#Frequency_Of_News_Consumption
-#Volunteering_Frequency
-#Voted_In_Local_Election
-
-
 import altair as alt
-import pandas as pd
 
-# Filter data for those who volunteered and those who did not vote
-volunteered_last_year = cev_all_2021_filter[
+# Filter out invalid or unnecessary rows
+volunteering_frequencies = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
     (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
     (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
-    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know") &  
-    (cev_all_2021_filter['Voted_In_Local_Election'] == "Yes")
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know")
 ]
 
-did_not_volunteer_last_year = cev_all_2021_filter[
-    (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
-    (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
-    (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
-    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
-    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know") &  
-    (cev_all_2021_filter['Voted_In_Local_Election'] == "No")
+# Filter the dataset for those who have voted or not voted
+if_voted = volunteering_frequencies.loc[volunteering_frequencies['Voted_In_Local_Election'].isin(['Yes', 'No'])]
+
+# Further filter for valid news consumption frequencies
+News_Consumption = if_voted.loc[
+    if_voted['Frequency_Of_News_Consumption'].notna() & 
+    ~if_voted['Frequency_Of_News_Consumption'].isin(['Basically Every Day', 'Refusal', 'Do Not Know', 'No Answer'])
 ]
 
-# Filter out 'Do Not Know', 'No Answer', and 'Everyday' for Frequency_Of_News_Consumption
-filtered_news_consumption_volunteered = volunteered_last_year[
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'] != "Do Not Know") &  
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'] != "No Answer") &  
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'] != "Everyday")
-]
+# Mapping news consumption frequency to colors
+News_Consumption_map = {
+    'A Few Times a Week': 'blue',       
+    'Not at All': 'green',              
+    'A Few Times a Month': 'orange',    
+    'Once A Month': 'red',   
+    'Less Than Once a Month': 'purple'              
+}
 
-filtered_news_consumption_did_not_volunteer = did_not_volunteer_last_year[
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'] != "Do Not Know") &  
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'] != "No Answer") &  
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'] != "Everyday")
-]
+# Apply the mapping to create a new column for colors
+News_Consumption['News_Consumption_Color'] = News_Consumption['Frequency_Of_News_Consumption'].map(News_Consumption_map)
 
-# Aggregating the counts for volunteered and did not volunteer data
-volunteered_counts = filtered_news_consumption_volunteered['Volunteering_Frequency'].value_counts().reset_index()
-volunteered_counts.columns = ['Volunteering_Frequency', 'Frequency']
-volunteered_counts['Voted_In_Local_Election'] = 'Yes'
-volunteered_counts['News_Consumption'] = filtered_news_consumption_volunteered['Frequency_Of_News_Consumption']
+# Count occurrences based on the relevant columns
+counts = News_Consumption.groupby(
+    ['Volunteering_Frequency', 'Voted_In_Local_Election', 'Frequency_Of_News_Consumption', 'News_Consumption_Color']
+).size().reset_index(name='Frequency')
 
-did_not_volunteer_counts = filtered_news_consumption_did_not_volunteer['Volunteering_Frequency'].value_counts().reset_index()
-did_not_volunteer_counts.columns = ['Volunteering_Frequency', 'Frequency']
-did_not_volunteer_counts['Voted_In_Local_Election'] = 'No'
-did_not_volunteer_counts['News_Consumption'] = filtered_news_consumption_did_not_volunteer['Frequency_Of_News_Consumption']
-
-# Combining the two datasets for plotting
-combined_counts = pd.concat([volunteered_counts, did_not_volunteer_counts])
-
-# Scatter plot
-chart = alt.Chart(combined_counts).mark_point(filled=True).encode(
-    y=alt.Y('Volunteering_Frequency:O', title='Volunteering Frequency'),  # Categorical variable for Y-axis
-    x=alt.X('Frequency:Q', title='Count'),  # Frequency count on X-axis (quantitative)
-    color=alt.Color('Voted_In_Local_Election:N', 
+# Create the Altair chart
+chart = alt.Chart(counts).mark_point(filled=True).encode(
+    y=alt.Y('Frequency_Of_News_Consumption:N', title='News Consumption Frequency'),  # Y-axis: News Consumption Frequency
+    x=alt.X('Frequency:Q', title='Count'),  # X-axis: Frequency (Count)
+    shape=alt.Shape('Voted_In_Local_Election:N',  # Shape indicates whether they voted
                     title='Voted in Local Election',
-                    scale=alt.Scale(domain=['Yes', 'No'], range=['blue', 'red']),
-                    legend=alt.Legend(title="Voted")),  # Color by whether they voted
-    size=alt.Size('News_Consumption:N', title='News Consumption', legend=alt.Legend(title="News Consumption")),  # Size based on News Consumption
-    tooltip=['Volunteering_Frequency', 'Frequency', 'Voted_In_Local_Election', 'News_Consumption']  # Tooltip for additional details
+                    scale=alt.Scale(domain=['Yes', 'No'], range=['circle', 'square'])),  # Circle for Yes, square for No
+    color=alt.Color('Volunteering_Frequency:N',  # Color by Volunteering Frequency
+                    title='Volunteering Frequency',
+                    scale=alt.Scale(domain=['Not at All', 'A Few Times a Month', 'A Few Times a Week', 'Once a Month', 'Less Than Once a Month'],
+                                    range=['blue', 'green', 'orange', 'red', 'purple'])),  # Colors for each Volunteering Frequency
+    size=alt.SizeValue(100),
+    tooltip=['Volunteering_Frequency', 'Frequency', 'Voted_In_Local_Election', 'Frequency_Of_News_Consumption']  # Tooltip with relevant details
 ).properties(
-    title='Volunteering Frequency for Those Who Voted vs. Those Who Did Not with News Consumption',
+    title='News Consumption vs. Volunteering Frequency with Voting Behavior',
     width=600,
+    height=200
+)
+
+# Show the chart
+chart.show()
+
+# Optionally, save the chart as a PNG
+chart.save('news_volunteering_voting_chart.png', format='png')
+```
+
+# If consumed news basically everyday, what is your voting frequency 
+```{python}
+volunteering_frequencies = cev_all_2021_filter[
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
+    (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know")
+]
+
+if_voted = volunteering_frequencies.loc[volunteering_frequencies['Voted_In_Local_Election'].isin(['Yes', 'No'])]
+
+News_Consumption_daily = if_voted.loc[
+    if_voted['Frequency_Of_News_Consumption'] == 'Basically Every Day'  
+]
+counts = News_Consumption_daily.groupby(
+    ['Volunteering_Frequency', 'Voted_In_Local_Election']
+).size().reset_index(name='Frequency')
+
+# Create the Altair chart
+chart = alt.Chart(counts).mark_bar().encode(
+    y=alt.Y('Volunteering_Frequency:N', title='Volunteering Frequency'),  # Y-axis: Volunteering Frequency
+    x=alt.X('Frequency:Q', title='Count'),  # X-axis: Frequency (Count)
+    color=alt.Color('Voted_In_Local_Election:N',  # Color indicates if the person voted
+                    title='Voted in Local Election',
+                    scale=alt.Scale(domain=['Yes', 'No'], range=['blue', 'orange'])),  # Blue for Yes, Orange for No
+    tooltip=['Volunteering_Frequency', 'Frequency', 'Voted_In_Local_Election']  # Tooltip with details
+).properties(
+    title='Volunteering Frequency vs. Voting Behavior (News Consumption: Basically Every Day)',
+    width=400,
     height=400
 )
 
+# Show the chart
 chart.show()
 
-
-
+# Optionally, save the chart as a PNG
+chart.save('volunteering_vs_voting_news_daily.png', format='png')
 ```
 
-
-
-
-
-
+# Relationship between news consumption and hours volunteered
 
 ```{python}
-filtered_data = cev_all_2021_filter[
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'] != "Not in Universe") &
-    (cev_all_2021_filter['Frequency_Of_News_Consumption'].notna())
-]
+summary_stats = filtered_data['Hours_Spent_Volunteering'].describe()
+print(summary_stats)
 
-frequency_counts = filtered_data['Frequency_Of_News_Consumption'].value_counts()
+print('min', filtered_data['Hours_Spent_Volunteering'].max())
+print('max', filtered_data['Hours_Spent_Volunteering'].min())
 
-print(frequency_counts)
+
+# Median value
+median_hours = filtered_data['Hours_Spent_Volunteering'].median()
+print(f"Median hours spent volunteering: {median_hours}")
+
+# Mode value
+mode_hours = filtered_data['Hours_Spent_Volunteering'].mode()[0]  # mode returns a series, so take the first value
+print(f"Most common hours spent volunteering: {mode_hours}")
+
+# Variance
+variance_hours = filtered_data['Hours_Spent_Volunteering'].var()
+print(f"Variance of hours spent volunteering: {variance_hours}")
+
 ```
 
 ```{python}
-#with fam
-filtered_data = cev_all_2021_filter[
-    (cev_all_2021_filter['Discussed_Issues_With_Friends_Family'] != "Not in Universe") &
-    (cev_all_2021_filter['Discussed_Issues_With_Friends_Family'].notna())
+import altair as alt
+
+# Step 1: Filter the data to exclude unwanted entries
+filtered_data = volunteering_frequencies[
+    (volunteering_frequencies['Frequency_Of_News_Consumption'].notna()) & 
+    ~volunteering_frequencies['Frequency_Of_News_Consumption'].isin(['Basically Every Day', 'Refusal', 'Do Not Know', 'No Answer']) & 
+    (volunteering_frequencies['Hours_Spent_Volunteering'].notna()) & 
+    ~volunteering_frequencies['Hours_Spent_Volunteering'].isin(['Not in Universe', 'Do Not Know', 'Refused'])
 ]
 
-print(filtered_data['Discussed_Issues_With_Friends_Family'].value_counts())
+# Step 2: Create a box plot of hours spent volunteering by news consumption frequency
+chart = alt.Chart(filtered_data).mark_boxplot(extent='min-max').encode(
+    x=alt.X('Frequency_Of_News_Consumption:N', title='News Consumption Frequency'),  # X-axis: News consumption frequency
+    y=alt.Y('Hours_Spent_Volunteering:Q', 
+            title='Hours Spent Volunteering', 
+            scale=alt.Scale(domain=[0, 200])),  # Y-axis with range limit at 200
+    tooltip=['Frequency_Of_News_Consumption', 'Hours_Spent_Volunteering']  # Tooltip with details
+).properties(
+    title='Boxplot of Hours Spent Volunteering by News Consumption Frequency',
+    width=300,
+    height=900
+)
+
+# Show the chart
+chart.show()
+
+# Optionally, save the chart as a PNG
+chart.save('boxplot_news_consumption_vs_volunteering_hours.png', format='png')
+
 ```
+
+# hours by state
+```{python}
+filtered_data = volunteering_frequencies[
+    (volunteering_frequencies['Hours_Spent_Volunteering'].notna()) & 
+    ~volunteering_frequencies['Hours_Spent_Volunteering'].isin(['Not in Universe', 'Do Not Know', 'Refusal'])
+]
+
+filtered_data['Hours_Spent_Volunteering'] = pd.to_numeric(filtered_data['Hours_Spent_Volunteering'], errors='coerce')
+
+filtered_data = filtered_data[filtered_data['Hours_Spent_Volunteering'].notna()]
+
+average_hours_per_state = filtered_data.groupby('US State')['Hours_Spent_Volunteering'].mean().reset_index()
+
+average_hours_per_states = average_hours_per_state.sort_values(by='Hours_Spent_Volunteering', ascending=False)
+
+print(average_hours_per_states)
+```
+
+
+# graphing the above but only labeling top and bottom 5 on averages
+```{python}
+
+scatter_plot = alt.Chart(average_hours_per_state).mark_point(size=100, color='blue').encode(
+    x=alt.X('US State:N', title='US State', sort='-y'),  # X-axis: US States
+    y=alt.Y('Hours_Spent_Volunteering:Q', title='Average Hours Spent Volunteering')  # Y-axis: Average Hours
+)
+
+# Step 2: Select top 5 and bottom 5 states for labeling
+top_5_states = average_hours_per_state.nlargest(5, 'Hours_Spent_Volunteering')
+bottom_5_states = average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')
+
+# Step 3: Create text labels for the top and bottom 5 states
+top_bottom_labels = alt.Chart(pd.concat([top_5_states, bottom_5_states])).mark_text(
+    align='left',
+    baseline='middle',
+    dx=15,  # Slightly offset the text to the right of the point
+    fontSize=14
+).encode(
+    x=alt.X('US State:N', title=' ', sort='-y'),  # X-axis: US States
+    y=alt.Y('Hours_Spent_Volunteering:Q'),  # Y-axis: Average Hours
+    text='US State:N'  # Add state labels
+)
+
+# Step 4: Combine scatter plot and labels
+chart = scatter_plot + top_bottom_labels
+
+# Step 5: Show the chart
+chart.properties(
+    title='Top and Bottom 5 States by Average Hours Spent Volunteering'
+).configure_axisX(
+    labelAngle=-90  # Rotate X-axis labels for better readability
+)
+
+chart.show()
+```
+
+# now only showing top and bottom 10 states per hours volunteered
+```{python}
+top_10_states = average_hours_per_state.nlargest(5, 'Hours_Spent_Volunteering')
+bottom_10_states = average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')
+
+# Combine top and bottom 10 into one DataFrame
+top_bottom_states = pd.concat([top_10_states, bottom_10_states])
+
+# Step 2: Create the scatter plot for the top and bottom 10 states
+scatter_plot = alt.Chart(top_bottom_states).mark_point(size=100, color='blue').encode(
+    x=alt.X('US State:N', title='US State', sort='-y'),  # X-axis: US State (sorted by average hours)
+    y=alt.Y('Hours_Spent_Volunteering:Q', title='Average Hours Spent Volunteering')  # Y-axis: Hours Volunteered
+)
+
+# Step 4: Combine scatter plot and labels
+chart = scatter_plot + top_bottom_labels
+
+# Step 5: Show the chart with title and adjusted axes
+chart = chart.properties(
+    title='Top 5 and Bottom 5 States by Average Hours Spent Volunteering',
+    width=400,   # Set a custom width for the chart
+    height=00   # Set a custom height for the chart
+).configure_axisY(
+    labelAngle=0  # Make sure the Y-axis labels (hours) are readable
+).configure_axisX(
+    labelAngle=45  # Rotate X-axis labels to avoid overlap
+)
+chart.show()
+```
+
+```{python}
+filtered_data = volunteering_frequencies[
+    (volunteering_frequencies['US State'].notna()) & 
+    (volunteering_frequencies['Voted_In_Local_Election'].isin(['Yes', 'No']))
+]
+state_counts = filtered_data.groupby(['US State', 'Voted_In_Local_Election']).size().reset_index(name='Count')
+
+wide_format = state_counts.pivot(index='US State', columns='Voted_In_Local_Election', values='Count').reset_index()
+
+wide_format.columns.name = None 
+wide_format.rename(columns={'No': 'Voted_No', 'Yes': 'Voted_Yes'}, inplace=True)
+
+wide_format['Total_Votes'] = wide_format['Voted_No'] + wide_format['Voted_Yes']
+
+print(wide_format.head(10))
+```
+
+
+
+
+
 
 ```{python}
 #with neighbors
@@ -684,31 +852,6 @@ frequency_counts = filtered_data['Discussed_Issues_With_Neighbors'].value_counts
 print(frequency_counts)
 ```
 
-```{python}
-#voted - binary
-print(frequency_counts)
-
-filtered_data = cev_all_2021_filter[
-    (cev_all_2021_filter['Voted_In_Local_Election'] != "Not in Universe") &
-    (cev_all_2021_filter['Voted_In_Local_Election'].notna())
-]
-
-frequency_counts = filtered_data['Voted_In_Local_Election'].value_counts()
-
-print(frequency_counts)
-```
-
-```{python}
-#bumver of hourss
-filtered_data = cev_all_2021_filter[
-    (cev_all_2021_filter['Hours_Spent_Volunteering'] != "Not in Universe") &
-    (cev_all_2021_filter['Hours_Spent_Volunteering'].notna())
-]
-
-frequency_counts = filtered_data['Hours_Spent_Volunteering'].value_counts()
-
-print(frequency_counts)
-```
 
 ```{python}
 #Posted_Views_On_Social_Media
@@ -736,9 +879,9 @@ print(frequency_counts)
 
 ```{python}
 #Boycott_Based_On_Values - binary
-filtered_data = cev_all_2021_filter[
-    (cev_all_2021_filter['Boycott_Based_On_Values'] != "Not in Universe") &
-    (cev_all_2021_filter['Boycott_Based_On_Values'].notna())
+filtered_data = volunteering_frequencies[
+    (volunteering_frequencies['Boycott_Based_On_Values'] != "Not in Universe") &
+    (volunteering_frequencies['Boycott_Based_On_Values'].notna())
 ]
 
 frequency_counts = filtered_data['Boycott_Based_On_Values'].value_counts()
@@ -747,10 +890,60 @@ print(frequency_counts)
 ```
 
 ```{python}
+#boycott chart
+#filtered if did vote
+volunteered_last_year = cev_all_2021_filter[
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
+    (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know") &  
+    (cev_all_2021_filter['Boycott_Based_On_Values'] == "Yes")
+]
+
+# Filter data for those who did not vote
+did_not_volunteer_last_year = cev_all_2021_filter[
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
+    (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know") &  
+    (cev_all_2021_filter['Boycott_Based_On_Values'] == "No")
+]
+
+volunteered_counts = volunteered_last_year['Volunteering_Frequency'].value_counts().reset_index()
+volunteered_counts.columns = ['Volunteering_Frequency', 'Frequency']
+volunteered_counts['Boycott_Based_On_Values'] = 'Yes'
+
+did_not_volunteer_counts = did_not_volunteer_last_year['Volunteering_Frequency'].value_counts().reset_index()
+did_not_volunteer_counts.columns = ['Volunteering_Frequency', 'Frequency']
+did_not_volunteer_counts['Boycott_Based_On_Values'] = 'No'
+
+combined_counts = pd.concat([volunteered_counts, did_not_volunteer_counts])
+
+chart = alt.Chart(combined_counts).mark_bar().encode(
+    y=alt.Y('Volunteering_Frequency:O', title='Volunteering Frequency'),  
+    x=alt.X('Frequency:Q', title='Count'),  
+    color=alt.Color('Boycott_Based_On_Values:N', title='Boycotted', scale=alt.Scale(domain=['Yes', 'No'], range=['blue', 'purple']), legend=alt.Legend(title="Voted")),  
+    tooltip=['Volunteering_Frequency', 'Frequency', 'Boycott_Based_On_Values']
+).properties(
+    title='Volunteering Frequency for Those Who Boycotted based on their Values or not',
+    width=600,
+    height=400
+)
+
+chart.show()
+chart.save('boycotted.png', format='png')
+```
+
+
+
+
+```{python}
 #Contacted_Public_Official - can be binary
-filtered_data = cev_all_2021_filter[
-    (cev_all_2021_filter['Contacted_Public_Official'] != "Not in Universe") &
-    (cev_all_2021_filter['Contacted_Public_Official'].notna())
+filtered_data = volunteering_frequencies[
+    (volunteering_frequencies['Contacted_Public_Official'] != "Not in Universe") &
+    (volunteering_frequencies['Contacted_Public_Official'].notna())
 ]
 
 frequency_counts = filtered_data['Contacted_Public_Official'].value_counts()
@@ -758,32 +951,70 @@ frequency_counts = filtered_data['Contacted_Public_Official'].value_counts()
 print(frequency_counts)
 ```
 
-
-
-
-
-
-Exploratory graph of polarization
 ```{python}
-import altair as alt
-#create list for graph to sort on 
-sorting_list = [
-        "Refused", "Don't Know", "Extremely Liberal",
-        "Liberal", "Slightly Liberal", 
-        "Moderate; middle of the road",
-        "Slightly conservative",
-        "Conservative",
-        "Extremely conservative",
-        "Haven’t thought much about this"
-    ]
+volunteered_last_year = cev_all_2021_filter[
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
+    (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know") &  
+    (cev_all_2021_filter['Contacted_Public_Official'] == "Yes")
+]
 
-alt.Chart(sub_polarization).mark_bar().encode(
-    alt.X("Titles_(V201200):N", sort = sorting_list),
-    alt.Y("Observations"),
-    alt.Color("Titles_(V201200)")
+# Filter data for those who did not vote
+did_not_volunteer_last_year = cev_all_2021_filter[
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
+    (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know") &  
+    (cev_all_2021_filter['Contacted_Public_Official'] == "No")
+]
+
+volunteered_counts = volunteered_last_year['Volunteering_Frequency'].value_counts().reset_index()
+volunteered_counts.columns = ['Volunteering_Frequency', 'Frequency']
+volunteered_counts['Contacted_Public_Official'] = 'Yes'
+
+did_not_volunteer_counts = did_not_volunteer_last_year['Volunteering_Frequency'].value_counts().reset_index()
+did_not_volunteer_counts.columns = ['Volunteering_Frequency', 'Frequency']
+did_not_volunteer_counts['Contacted_Public_Official'] = 'No'
+
+combined_counts = pd.concat([volunteered_counts, did_not_volunteer_counts])
+
+chart = alt.Chart(combined_counts).mark_bar().encode(
+    y=alt.Y('Volunteering_Frequency:O', title='Volunteering Frequency'),  
+    x=alt.X('Frequency:Q', title='Count'),  
+    color=alt.Color('Contacted_Public_Official:N', title='Contacted Elected Official', scale=alt.Scale(domain=['Yes', 'No'], range=['blue', 'purple']), legend=alt.Legend(title="Voted")),  
+    tooltip=['Volunteering_Frequency', 'Frequency', 'Contacted_Public_Official']
+).properties(
+    title='Volunteering Frequency for Those Who Called their Public Official',
+    width=600,
+    height=400
 )
 
+chart.show()
+chart.save('contacted.png', format='png')
 ```
+
+
+
+```{python}
+filtered_data = volunteering_frequencies[
+    (volunteering_frequencies['US State'].notna()) & 
+    (volunteering_frequencies['Voted_In_Local_Election'].isin(['Yes', 'No']))
+]
+
+state_counts = filtered_data.groupby(['US State', 'Voted_In_Local_Election']).size().reset_index(name='Count')
+
+wide_format = state_counts.pivot(index='US State', columns='Voted_In_Local_Election', values='Count').reset_index()
+
+wide_format.columns.name = None 
+wide_format.rename(columns={'No': 'Voted_No', 'Yes': 'Voted_Yes'}, inplace=True)
+print(wide_format) 
+```
+
+
+
 
 4. Reproductibility (10%)
     * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see "Final Repository" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments
