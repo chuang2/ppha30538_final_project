@@ -30,6 +30,9 @@ variable_mapping = {
 
 
 def calculate_exclusion_stats(category):
+    '''
+    Counts the number and proportion of responses that turn up 
+    '''
     excluded = cev_all_2021_filter[
         cev_all_2021_filter[category].isin(exclude_categories)]
     total_count = len(cev_all_2021_filter)
@@ -72,12 +75,18 @@ app_ui = ui.page_fluid(
 
 def server(input, output, session):
 
-    # Helper function to get column name from display name
     def get_column_name(display_name):
+        '''
+        Helper function to get column name from display name
+        '''
         return {v: k for k, v in variable_mapping.items()}[display_name]
 
     @reactive.Calc
     def processed_data():
+        """
+        processes the data and picks the category based on whatever the user selects
+        adds binning if the user selects "age" as a category
+        """
         selected_column = get_column_name(input.variable())
 
         # Attribution: ChatGPT

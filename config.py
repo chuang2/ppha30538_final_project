@@ -82,6 +82,132 @@ rename_mapping = {
     "gtmetsta": "Urban_Rural_Status"
 }
 
+
+###
+###
+def calculate_engagement_score(row):
+    """
+    We're interested in measuring political engagement (and polarization, which is an imperfect 
+    but still useful proxy of political engagement)).
+    We create this score using a combination of some of the existing responses above.
+    Returns a score between 0-100, where higher scores indicate greater political engagement.
+
+    Weights for different components:
+    - Value-based boycotts (30%): Requires strong conviction and tangible action
+    - Contacting officials (30%): Requires significant effort and civic engagement
+    - Discussion with neighbors (15%): Active interpersonal engagement
+    - Social media posting (15%): Public engagement, potentially reaching wider audience
+    - News consumption (10%): Passive form of engagement
+
+    Returns None if too many values are missing to calculate a reliable score.
+
+    Note: Since the original version of this function gave a result where 99% of respondents
+    had a score of 3 out of 100, we worried that the score calculation is affected by
+    multiple missing values (refusals, no answers, do not knows, not in universes, etc.)
+    We asked ChatGPT to suggest a remedy, which involved creating a valid_responses metric
+    and only count scores if respondents answered a majority of engagement-related questions.
+    This removes people who skipped over the engagement questions instead of treating them
+    as having an engagement score of 0. 
+
+    (There's an argument to be made that people skipping the questions is itself a sign of
+    legitimate low political engagement, but there is also evidence that people may feel
+    incentives to camouflage their own beliefs if they feel they will be judged.)
+    """
+    valid_responses = 0
+    total_questions = 5  # boycott, contact official, discussion, social media, news
+    score = 0
+
+    # Helper function to convert frequency responses to numerical values
+    def frequency_to_score(value):
+        if value == 'Basically Every Day':
+            return 100
+        elif value == 'A Few Times a Week':
+            return 80
+        elif value == 'A Few Times a Month':
+            return 60
+        elif value == 'Once a Month':
+            return 40
+        elif value == 'Less Than Once a Month':
+            return 20
+        elif value == 'Not at All':
+            return 0
+        elif value in ['No Answer', 'Refusal', 'Do Not Know', 'Not in Universe', 'Missing']:
+            return 0, False
+        return 0, False
+
+     # Value-based boycotts (30% of total)
+    if row.get('Boycott_Based_On_Values') == 'Yes':
+        score += 30
+        valid_responses += 1
+    elif row.get('Boycott_Based_On_Values') == 'No':
+        valid_responses += 1
+
+    # Contacting officials (30% of total)
+    if row.get('Contacted_Public_Official') == 'Yes':
+        score += 30
+        valid_responses += 1
+    elif row.get('Contacted_Public_Official') == 'No':
+        valid_responses += 1
+
+    # Discussion with neighbors (15% of total)
+    freq_score, is_valid = frequency_to_score(
+        row.get('Discussed_Issues_With_Neighbors', 'Missing'))
+    if is_valid:
+        score += (freq_score * 0.15)
+        valid_responses += 1
+
+    # Social media posting (15% of total)
+    freq_score, is_valid = frequency_to_score(
+        row.get('Posted_Views_On_Social_Media', 'Missing'))
+    if is_valid:
+        score += (freq_score * 0.15)
+        valid_responses += 1
+
+    # News consumption (10% of total)
+    freq_score, is_valid = frequency_to_score(
+        row.get('Frequency_Of_News_Consumption', 'Missing'))
+    if is_valid:
+        score += (freq_score * 0.10)
+        valid_responses += 1
+
+    # Return None if less than 60% of questions have valid responses
+    if valid_responses < (total_questions * 0.6):
+        return None
+
+    return score
+
+
+def add_engagement_score(df):
+    """
+    Add a political engagement score column to the dataframe.
+    """
+    # Calculate scores
+    df['political_engagement_score'] = df.apply(
+        calculate_engagement_score, axis=1)
+
+    # Add categorical labels based on score ranges
+    def score_to_category(score):
+        if score >= 80:
+            return "Very High Engagement"
+        elif score >= 60:
+            return "High Engagement"
+        elif score >= 40:
+            return "Moderate Engagement"
+        elif score >= 20:
+            return "Low Engagement"
+        else:
+            return "Very Low Engagement"
+
+    df['engagement_level'] = df['political_engagement_score'].apply(
+        score_to_category)
+
+    return df
+
+###
+
+###
+
+
 # Default dict - common map values for all variables
 default_dict = {
     '-9': 'No Answer',

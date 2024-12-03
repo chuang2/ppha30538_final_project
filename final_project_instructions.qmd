@@ -260,6 +260,15 @@ cev_all_2021_filter['Education_Level'] = cev_all_2021_filter['Education_Level'].
 cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(
     gtmetsta_dict)
 
+# Mutate the engagement score variable we came up with in config.py
+cev_all_2021_filter = add_engagement_score(cev_all_2021_filter)
+
+# Temporary test code delete later
+print("\nEngagement Score Summary:")
+print(cev_all_2021_filter['political_engagement_score'].describe())
+print("\nEngagement Level Distribution:")
+print(cev_all_2021_filter['engagement_level'].value_counts())
+
 ```
 
 Lastly, export the cleaned data as a csv for plotting purposes
