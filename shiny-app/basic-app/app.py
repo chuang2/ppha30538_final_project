@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Load dataset from data folder
 data_path = Path("data/cev_2021_cleaned.csv")
-cev_all_2021_filter = pd.read_csv(data_path)
+cev_all_2021_filter = pd.read_csv(data_path, low_memory=False)
 
 ### Base definitions/functions used for all apps below##
 
@@ -39,7 +39,7 @@ def calculate_exclusion_stats(category, metric_type=None):
     excluded_category = data[data[category].isin(exclude_categories)]
 
     # For engagement score, also count insufficient data
-    if metric == "engagement":
+    if metric_type == "engagement":
         excluded_engagement = data[pd.isna(data['political_engagement_score'])]
         excluded = pd.concat(
             [excluded_category, excluded_engagement]).drop_duplicates()
@@ -147,10 +147,11 @@ def server(input, output, session):
         # Get processed data with any special handling (like age groups)
         data = processed_data()
         selected_column = get_column_name(input.variable())
+        metric_type = input.metric()
 
         filtered_data = data[~data[selected_column].isin(exclude_categories)]
 
-        if input.metric() == "volunteer":
+        if metric_type == "volunteer":
 
             metric_data = (filtered_data
                            .groupby(selected_column)['Volunteered_Past_Year']
@@ -177,6 +178,13 @@ def server(input, output, session):
             y_title = "Average Political Engagement Score"
             tooltip_title = "Engagement Score"
 
+        # Debugging - handle empty data - suggested by ChatGPT
+        if metric_data.empty:
+            print(f"No data available for {input.variable()}.")
+            return alt.Chart(pd.DataFrame({'No Data': [1]})).mark_text(
+                text="No data available"
+            ).encode()
+
         # Sort if requested
         if input.sort_bars():
             metric_data = metric_data.sort_values(
@@ -200,6 +208,7 @@ def server(input, output, session):
             width=600,
             height=300
         )
+
         return chart
 
     @output

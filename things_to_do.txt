@@ -1,3 +1,6 @@
 #Things to do
 -Add feature to limit number of bars on graphs
 -Add text explaining how the political engagement score was derived, with caveats
+
+-Household size and US States are borked
+-Need to dynamically update y axis to not just show volunteer
