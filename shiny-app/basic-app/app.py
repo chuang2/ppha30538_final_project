@@ -1,4 +1,4 @@
-from shiny import App, render, ui
+from shiny import App, render, ui, reactive
 from shinywidgets import render_altair, output_widget
 import pandas as pd
 import altair as alt
