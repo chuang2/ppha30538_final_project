@@ -1,9 +1,19 @@
 # Note: PRSUPINT = had an interview with subject
 
-# I found out that the data dictionaries don't account for existing qualitative data, so
-# this is a function that will help augment our existing dictionaries to capture the times
-# where people ignore the numeric codes and write the qualitative data directly.
+import pandas as pd
+
+
 def enhance_mapping_dictionary(original_dict):
+    '''
+    I found out that the data dictionaries don't account for existing qualitative data, so 
+    this is a function that will help augment our existing dictionaries to capture the times
+    where people ignore the numeric codes and write the qualitative data directly.
+    For example, if a column has a bunch of "1", "2, "5", "Female", "Metropolitan", etc., it 
+    will convert the numeric codes while keeping the qualitative data.
+
+    This will augment all of the existing dictionaries below rather than having to manually 
+    change all of them.
+    '''
     enhanced_dict = original_dict.copy()
     special_codes = {'-9', '-3', '-2', '-1', '.', '.u', '.r', '.n', '.d'}
     valid_values = {v for k, v in original_dict.items()
@@ -73,6 +83,138 @@ rename_mapping = {
     "peeduca": "Education_Level",
     "gtmetsta": "Urban_Rural_Status"
 }
+
+
+###
+###
+def calculate_engagement_score(row):
+    """
+    We're interested in measuring political engagement (and polarization, which is an imperfect 
+    but still useful proxy of political engagement)).
+    We create this score using a combination of some of the existing responses above.
+    Returns a score between 0-100, where higher scores indicate greater political engagement.
+
+    Weights for different components:
+    - Value-based boycotts (30%): Requires strong conviction and tangible action
+    - Contacting officials (30%): Requires significant effort and civic engagement
+    - Discussion with neighbors (15%): Active interpersonal engagement
+    - Social media posting (15%): Public engagement, potentially reaching wider audience
+    - News consumption (10%): Passive form of engagement
+
+    Returns None if too many values are missing to calculate a reliable score.
+
+    Note: Since the original version of this function gave a result where 99% of respondents
+    had a score of 3 out of 100, we worried that the score calculation is affected by
+    multiple missing values (refusals, no answers, do not knows, not in universes, etc.)
+    We asked ChatGPT to suggest a remedy, which involved creating a valid_responses metric
+    and only count scores if respondents answered a majority of engagement-related questions.
+    This removes people who skipped over the engagement questions instead of treating them
+    as having an engagement score of 0. 
+
+    (There's an argument to be made that people skipping the questions is itself a sign of
+    legitimate low political engagement, but there is also evidence that people may feel
+    incentives to camouflage their own beliefs if they feel they will be judged.)
+    """
+    valid_responses = 0
+    total_questions = 5  # boycott, contact official, discussion, social media, news
+    score = 0
+
+    # Helper function to convert frequency responses to numerical values
+    def frequency_to_score(value):
+        """
+        Convert the qualitative frequency responses to numerical scores for later calculation.
+        Returns tuple of (score, is_valid), with is_valid determining if the respondent answered the question
+        """
+        if value == 'Basically Every Day':
+            return (100, True)
+        elif value == 'A Few Times a Week':
+            return (80, True)
+        elif value == 'A Few Times a Month':
+            return (60, True)
+        elif value == 'Once a Month':
+            return (40, True)
+        elif value == 'Less Than Once a Month':
+            return (20, True)
+        elif value == 'Not at All':
+            return (0, True)
+        elif value in ['No Answer', 'Refusal', 'Do Not Know', 'Not in Universe', 'Missing']:
+            return (0, False)
+        return (0, False)
+
+     # Value-based boycotts (30% of total)
+    if row.get('Boycott_Based_On_Values') == 'Yes':
+        score += 30
+        valid_responses += 1
+    elif row.get('Boycott_Based_On_Values') == 'No':
+        valid_responses += 1
+
+    # Contacting officials (30% of total)
+    if row.get('Contacted_Public_Official') == 'Yes':
+        score += 30
+        valid_responses += 1
+    elif row.get('Contacted_Public_Official') == 'No':
+        valid_responses += 1
+
+    # Discussion with neighbors (15% of total)
+    freq_score, is_valid = frequency_to_score(
+        row.get('Discussed_Issues_With_Neighbors', 'Missing'))
+    if is_valid:
+        score += (freq_score * 0.15)
+        valid_responses += 1
+
+    # Social media posting (15% of total)
+    freq_score, is_valid = frequency_to_score(
+        row.get('Posted_Views_On_Social_Media', 'Missing'))
+    if is_valid:
+        score += (freq_score * 0.15)
+        valid_responses += 1
+
+    # News consumption (10% of total)
+    freq_score, is_valid = frequency_to_score(
+        row.get('Frequency_Of_News_Consumption', 'Missing'))
+    if is_valid:
+        score += (freq_score * 0.10)
+        valid_responses += 1
+
+    # Return None if less than 60% of questions have valid responses
+    if valid_responses < (total_questions * 0.6):
+        return None
+
+    return score
+
+
+def add_engagement_score(df):
+    """
+    Adds the political engagement score column to the dataframe.
+    """
+    # Calculate scores
+    df['political_engagement_score'] = df.apply(
+        calculate_engagement_score, axis=1)
+
+    # Add categorical labels based on score ranges
+    def score_to_category(score):
+        if pd.isna(score):
+            return "Insufficient Data"
+        if score >= 80:
+            return "Very High Engagement"
+        elif score >= 60:
+            return "High Engagement"
+        elif score >= 40:
+            return "Moderate Engagement"
+        elif score >= 20:
+            return "Low Engagement"
+        else:
+            return "Very Low Engagement"
+
+    df['engagement_level'] = df['political_engagement_score'].apply(
+        score_to_category)
+
+    return df
+
+###
+
+###
+
 
 # Default dict - common map values for all variables
 default_dict = {

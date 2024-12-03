@@ -96,21 +96,22 @@ First we need to merge the two datasets:
 ```{python}
 vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
 
-#I found out the data type is int64 for one df and object for the other
+# I found out the data type is int64 for one df and object for the other
 
 cev_2021_raw = cev_2021_raw.astype(str)
 vcl_supplement_raw = vcl_supplement_raw.astype(str)
 
-#This finds all the variables in common between the two for a merge
-common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
+# This finds all the variables in common between the two for a merge
+common_keys = list(set(vcl_supplement_raw.columns).intersection(
+    set(cev_2021_raw.columns)))
 
 
-
-cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
+cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw,
+                        on=common_keys, how="outer")
 
 cev_all_2021.head(5)
 
-#Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
+# Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
 
 # We can use a config.py file to keep this readable. Full details are in the config.py file
 ``` 
@@ -162,13 +163,21 @@ If there are some entries in this column that are already coded "Yes" or "No", o
 #For testing purposes, delete later
 cev_pre_clean_test = cev_all_2021_filter.copy()
 
+```
+
+```{python}
 
 # Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
 # Import and reload config
+from pathlib import Path
+import os
+from us import states
+from config import add_engagement_score
+from config import *
 import importlib
 import config
 importlib.reload(config)
-from config import *
+
 
 # Replace FIPS codes with states
 
@@ -259,24 +268,64 @@ cev_all_2021_filter['Education_Level'] = cev_all_2021_filter['Education_Level'].
 cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(
     gtmetsta_dict)
 
-```
+# Debugging code - Before engagement score calculation
+print("Columns before adding engagement score:")
+print(cev_all_2021_filter.columns.tolist())
+print("\nShape before:", cev_all_2021_filter.shape)
 
-Lastly, export the cleaned data as a csv for plotting purposes
 
-```{python}
-import os
-from pathlib import Path
+# Mutate the engagement score variable we came up with in config.py
+cev_all_2021_filter = add_engagement_score(cev_all_2021_filter)
+
+
+# More debugging code
+print("\nColumns after adding engagement score:")
+print(cev_all_2021_filter.columns.tolist())
+print("\nShape after:", cev_all_2021_filter.shape)
+
+# Before saving
+print("\nVerifying engagement score columns exist:")
+print("'political_engagement_score' exists:",
+      'political_engagement_score' in cev_all_2021_filter.columns)
+print("'engagement_level' exists:",
+      'engagement_level' in cev_all_2021_filter.columns)
+
+
+# Lastly, export the cleaned data as a csv for plotting purposes
+
 
 shiny_data_path = Path("shiny-app/basic-app/data")
 
 # Create directory if it doesn't exist
 shiny_data_path.mkdir(parents=True, exist_ok=True)
 
-# Save dataset
+# Save with explicit column list to ensure all columns are included (debugging)
+columns_to_save = cev_all_2021_filter.columns.tolist()
 cev_all_2021_filter.to_csv(
-    shiny_data_path / "cev_2021_cleaned.csv", index=False)
+    shiny_data_path / "cev_2021_cleaned.csv",
+    columns=columns_to_save,
+    index=False
+)
+
+# Verify saved file - more debugging
+verification_df = pd.read_csv(shiny_data_path / "cev_2021_cleaned.csv")
+print("\nColumns in saved CSV:")
+print(verification_df.columns.tolist())
 
 print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
+
+```
+
+```{python}
+#For summary/debugging only
+print((cev_all_2021_filter["Volunteered_Past_Year"] == "Yes").sum())
+print(21482/255744)
+
+print(cev_all_2021_filter['political_engagement_score'].mean())
+```
+
+```{python}
+
 
 ```
 
