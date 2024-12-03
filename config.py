@@ -1,5 +1,7 @@
 # Note: PRSUPINT = had an interview with subject
 
+import pandas as pd
+
 
 def enhance_mapping_dictionary(original_dict):
     '''
@@ -119,21 +121,25 @@ def calculate_engagement_score(row):
 
     # Helper function to convert frequency responses to numerical values
     def frequency_to_score(value):
+        """
+        Convert the qualitative frequency responses to numerical scores for later calculation.
+        Returns tuple of (score, is_valid), with is_valid determining if the respondent answered the question
+        """
         if value == 'Basically Every Day':
-            return 100
+            return (100, True)
         elif value == 'A Few Times a Week':
-            return 80
+            return (80, True)
         elif value == 'A Few Times a Month':
-            return 60
+            return (60, True)
         elif value == 'Once a Month':
-            return 40
+            return (40, True)
         elif value == 'Less Than Once a Month':
-            return 20
+            return (20, True)
         elif value == 'Not at All':
-            return 0
+            return (0, True)
         elif value in ['No Answer', 'Refusal', 'Do Not Know', 'Not in Universe', 'Missing']:
-            return 0, False
-        return 0, False
+            return (0, False)
+        return (0, False)
 
      # Value-based boycotts (30% of total)
     if row.get('Boycott_Based_On_Values') == 'Yes':
@@ -179,7 +185,7 @@ def calculate_engagement_score(row):
 
 def add_engagement_score(df):
     """
-    Add a political engagement score column to the dataframe.
+    Adds the political engagement score column to the dataframe.
     """
     # Calculate scores
     df['political_engagement_score'] = df.apply(
@@ -187,6 +193,8 @@ def add_engagement_score(df):
 
     # Add categorical labels based on score ranges
     def score_to_category(score):
+        if pd.isna(score):
+            return "Insufficient Data"
         if score >= 80:
             return "Very High Engagement"
         elif score >= 60:
