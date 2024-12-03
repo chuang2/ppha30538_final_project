@@ -40,6 +40,7 @@ import geopandas as gpd
 # shiny framework
 from shiny import App, ui, render
 
+#for spatial data
 
 ```
 
@@ -397,6 +398,127 @@ sub_polarization['US State'] = pd.to_numeric(sub_polarization['V201013a'], error
 
 sub_polarization['US State'] = sub_polarization['US State'].map(fips_to_state)
 
+sub_polarization["US State 2"] = pd.to_numeric(sub_polarization['V201014b'], errors='coerce')
+
+sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_state)
+
+
+```
+
+Then, make data using V201018, which asks:  What political party are you registered with, if any?
+
+-9. Refused -8. Don’t know -1. Inapplicable 
+1 Democratic party 
+2 Republican party
+ 4  None or ‘independent’ 
+5 Other {SPECIFY}
+
+```{python}
+crosswalk_party = pd.DataFrame({
+    "Party_Numbers_(V201018)":[-9, -8, -1, 1, 2, 4, 5],
+    "Party_Affiliation_(V201018)":[
+        "Refused", "Don't know", "Inapplicable", "Democratic party",
+        "Republican party", "None or independent", "Other"
+        ]})
+
+sub_polarization = sub_polarization.merge(crosswalk_party, left_on = "V201018", right_on = "Party_Numbers_(V201018)")
+
+```
+
+Going to switch to a different marker for political party due to some challenges with V201018
+Now using: V201228, which asks:
+
+"Generally speaking, do you usually think of yourself as [a
+Democrat, a Republican / a Republican, a Democrat], an
+independent, or what?"
+
+-9. Refused
+-8. Don’t know
+-4. Technical error
+0. No preference {VOL - video/phone only}
+1. Democrat
+2. Republican
+3. Independent
+5. Other party {SPECIFY}
+
+```{python}
+crosswalk_party_2 = pd.DataFrame({
+    "Party_Numbers_(V201228)":[-9, -8, -4, 0, 1, 2, 3, 5],
+    "Party_Affiliation_(V201228)":[
+        "Refused", "Don't know", "Technical error", "No Preference", "Democrat",
+        "Republican", "Independent", "Other party"
+        ]})
+
+sub_polarization = sub_polarization.merge(crosswalk_party_2, left_on = "V201228", right_on = "Party_Numbers_(V201228)")
+
+
+```
+
+
+Following that, make function that subsets by state, and then groups
+by political party, and then returns the share of Democrats
+that are some kind of Conservative, and the share of Republicans that are some kind of Liberal
+```{python}
+
+
+def find_share(df, state):
+        #subset by state
+        sub = df[df["US State 2"] == state]
+        Party_People = ["Democrat", "Republican"]
+        Conservatives = ["Slightly conservative",
+        "Conservative",
+        "Extremely conservative"]
+        Liberals = ["Extremely Liberal",
+        "Liberal", "Slightly Liberal"]
+        #count of partisans
+        Party_Count = []
+        #count of entries that are Dem but conservative or Repub but liberal
+        Outlier_box = []
+        #get Party_Count
+        for index, entry in sub.iterrows():
+                if entry["Party_Affiliation_(V201228)"] in Party_People:
+                        Party_Count.append(1)
+                else:
+                        Party_Count.append(0)
+        
+        for index, entry in sub.iterrows():
+                if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                        Outlier_box.append(1)
+                elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                        Outlier_box.append(1)
+                else:
+                        Outlier_box.append(0)
+        
+        sub["Party_Count"] = Party_Count
+        sub["Outliers"] = Outlier_box
+        return sub
+        
+Z = find_share(sub_polarization, "IL")                     
+
+IL_Group = Z.groupby("Party_Affiliation_(V201228)")[["Outliers", "Party_Count"]].sum().reset_index()
+
+IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count"])
+
+
+
+```
+
+
+Make bigger function to hold everything together
+```{python}
+
+def seek_polar(df, state):
+        mod_df = find_share(df, state)
+        mod_df = mod_df.groupby(
+            "Party_Affiliation_(V201228)"
+            )[["Outliers", "Party_Count"]].sum().reset_index()
+
+        mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+        return mod_df
+
+#Example with IL
+seek_polar(sub_polarization, "IL")
+
 
 
 
@@ -431,9 +553,9 @@ sorting_list = [
     ]
 
 alt.Chart(sub_polarization).mark_bar().encode(
-    alt.X("Titles_(V201200):N", sort = sorting_list),
+    alt.X("Ideology_(V201200):N", sort = sorting_list),
     alt.Y("Observations"),
-    alt.Color("Titles_(V201200)")
+    alt.Color("Ideology_(V201200)")
 )
 
 
