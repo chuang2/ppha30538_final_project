@@ -95,21 +95,22 @@ First we need to merge the two datasets:
 ```{python}
 vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
 
-#I found out the data type is int64 for one df and object for the other
+# I found out the data type is int64 for one df and object for the other
 
 cev_2021_raw = cev_2021_raw.astype(str)
 vcl_supplement_raw = vcl_supplement_raw.astype(str)
 
-#This finds all the variables in common between the two for a merge
-common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
+# This finds all the variables in common between the two for a merge
+common_keys = list(set(vcl_supplement_raw.columns).intersection(
+    set(cev_2021_raw.columns)))
 
 
-
-cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
+cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw,
+                        on=common_keys, how="outer")
 
 cev_all_2021.head(5)
 
-#Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
+# Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
 
 # We can use a config.py file to keep this readable. Full details are in the config.py file
 ``` 
@@ -312,6 +313,14 @@ print(verification_df.columns.tolist())
 
 print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
 
+```
+
+```{python}
+#For summary/debugging only
+print((cev_all_2021_filter["Volunteered_Past_Year"] == "Yes").sum())
+print(21482/255744)
+
+print(cev_all_2021_filter['political_engagement_score'].mean())
 ```
 
 ```{python}
