@@ -40,6 +40,7 @@ import geopandas as gpd
 # shiny framework
 from shiny import App, ui, render
 
+from us import states
 
 ```
 
@@ -48,9 +49,13 @@ from shiny import App, ui, render
 #Source: https://data.americorps.gov/dataset/2021-CEV-Data-Current-Population-Survey-Civic-Enga/rgh8-g2uc/about_data
 #Will need to include google drive/dropbox link since > 300MB
 
-cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
+#cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
 
-vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+cev_2021_raw = pd.read_csv("C:/Users/andre/Documents/GitHub\DAP_2_Temp_HW_Holder/Data/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241127.csv", encoding = 'utf-8')
+
+#vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+
+vcl_supplement_raw = pd.read_csv("C:/Users/andre/Documents/GitHub/DAP_2_Temp_HW_Holder/Data/sep21pub.csv")
 
 ```
 Most relevant variables to focus on:
@@ -364,7 +369,7 @@ Analyzing Question V201200, which is a question asking:
 
 crosswalk_polar = pd.DataFrame({
     "Self_Rating_(V201200)":[-9, -8, 1, 2, 3, 4, 5, 6, 7, 99],
-    "Titles_(V201200)": [
+    "Ideology_(V201200)": [
         "Refused", "Don't Know", "Extremely Liberal",
         "Liberal", "Slightly Liberal", 
         "Moderate; middle of the road",
@@ -384,9 +389,13 @@ Make dataframe where all data is aggregated by state, and then
 we can show correlation between measure of polarity and 
 the share of respondents in a state who did volunteer work.
 
-Clean data to produce some geographic information
+First, clean data to produce some geographic information:
 
-V201013a
+We will use V201014b, a variable that makes note of the state in 
+which a respondent is registered to vote, and use it to make a 
+variable called US State. We are using it to form US State 2, not US State, 
+because V201013a is US State, and that variable has fewer rows.
+
 ```{python}
 #Replace FIPS codes with states
 from us import states
@@ -397,6 +406,125 @@ sub_polarization['US State'] = pd.to_numeric(sub_polarization['V201013a'], error
 
 sub_polarization['US State'] = sub_polarization['US State'].map(fips_to_state)
 
+sub_polarization["US State 2"] = pd.to_numeric(sub_polarization['V201014b'], errors='coerce')
+
+sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_state)
+
+
+```
+
+Then, make data using V201018, which asks:  What political party are you registered with, if any?
+
+-9. Refused -8. Don’t know -1. Inapplicable 
+1 Democratic party 
+2 Republican party
+ 4  None or ‘independent’ 
+5 Other {SPECIFY}
+
+```{python}
+crosswalk_party = pd.DataFrame({
+    "Party_Numbers_(V201018)":[-9, -8, -1, 1, 2, 4, 5],
+    "Party_Affiliation_(V201018)":[
+        "Refused", "Don't know", "Inapplicable", "Democratic party",
+        "Republican party", "None or independent", "Other"
+        ]})
+
+sub_polarization = sub_polarization.merge(crosswalk_party, left_on = "V201018", right_on = "Party_Numbers_(V201018)")
+
+```
+
+Going to switch to a different marker for political party due to some challenges with V201018
+Now using: V201228, which asks:
+
+"Generally speaking, do you usually think of yourself as [a
+Democrat, a Republican / a Republican, a Democrat], an
+independent, or what?"
+
+-9. Refused
+-8. Don’t know
+-4. Technical error
+0. No preference {VOL - video/phone only}
+1. Democrat
+2. Republican
+3. Independent
+5. Other party {SPECIFY}
+
+```{python}
+crosswalk_party_2 = pd.DataFrame({
+    "Party_Numbers_(V201228)":[-9, -8, -4, 0, 1, 2, 3, 5],
+    "Party_Affiliation_(V201228)":[
+        "Refused", "Don't know", "Technical error", "No Preference", "Democrat",
+        "Republican", "Independent", "Other party"
+        ]})
+
+sub_polarization = sub_polarization.merge(crosswalk_party_2, left_on = "V201228", right_on = "Party_Numbers_(V201228)")
+
+
+```
+
+
+Following that, make function that subsets by state, and then groups
+by political party, and then returns the share of Democrats
+that are some kind of Conservative, and the share of Republicans that are some kind of Liberal
+```{python}
+
+
+def find_share(df, state):
+        #subset by state
+        sub = df[df["US State 2"] == state]
+        Party_People = ["Democrat", "Republican"]
+        Conservatives = ["Slightly conservative",
+        "Conservative",
+        "Extremely conservative"]
+        Liberals = ["Extremely Liberal",
+        "Liberal", "Slightly Liberal"]
+        #count of partisans
+        Party_Count = []
+        #count of entries that are Dem but conservative or Repub but liberal
+        Outlier_box = []
+        #get Party_Count
+        for index, entry in sub.iterrows():
+                if entry["Party_Affiliation_(V201228)"] in Party_People:
+                        Party_Count.append(1)
+                else:
+                        Party_Count.append(0)
+        
+        for index, entry in sub.iterrows():
+                if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                        Outlier_box.append(1)
+                elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                        Outlier_box.append(1)
+                else:
+                        Outlier_box.append(0)
+        
+        sub["Party_Count"] = Party_Count
+        sub["Outliers"] = Outlier_box
+        return sub
+        
+Z = find_share(sub_polarization, "IL")                     
+
+IL_Group = Z.groupby("Party_Affiliation_(V201228)")[["Outliers", "Party_Count"]].sum().reset_index()
+
+IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count"])
+
+
+
+```
+
+
+Make bigger function to hold everything together
+```{python}
+
+def seek_polar(df, state):
+        mod_df = find_share(df, state)
+        mod_df = mod_df.groupby(
+            "Party_Affiliation_(V201228)"
+            )[["Outliers", "Party_Count"]].sum().reset_index()
+        mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+        return mod_df
+
+#Example with IL
+seek_polar(sub_polarization, "IL")
 
 
 
@@ -414,11 +542,13 @@ version. www.electionstudies.org
         * You can also add additional dynamic plots into your app to substitute for a static plot. So, a `shiny` app with 3 dynamic plots will count for full credit.
 
 ```{python}
-
+_
 ```
 
 Exploratory graph of polarization
 ```{python}
+alt.data_transformers.enable("vegafusion")
+
 #create list for graph to sort on 
 sorting_list = [
         "Refused", "Don't Know", "Extremely Liberal",
