@@ -197,7 +197,7 @@ def server(input, output, session):
                     order='descending'
                     ) if input.sort_bars() else None,
                     axis=alt.Axis(labelAngle=45)),
-            y=alt.Y('Metric_Value', title="Percentage Volunteered"),
+            y=alt.Y('Metric_Value', title=y_title),
             tooltip=[
                 alt.Tooltip(input.variable()),
                 alt.Tooltip('Metric_Value',
