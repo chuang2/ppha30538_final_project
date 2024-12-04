@@ -40,8 +40,8 @@ import geopandas as gpd
 # shiny framework
 from shiny import App, ui, render
 
+#for spatial data
 from us import states
-
 ```
 
 ```{python}
@@ -51,11 +51,14 @@ from us import states
 
 #cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
 
-cev_2021_raw = pd.read_csv("C:/Users/andre/Documents/GitHub\DAP_2_Temp_HW_Holder/Data/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241127.csv", encoding = 'utf-8')
+cev_2021_raw = pd.read_csv(
+    "C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241127.csv", encoding = 'utf-8'
+    )
 
 #vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
 
-vcl_supplement_raw = pd.read_csv("C:/Users/andre/Documents/GitHub/DAP_2_Temp_HW_Holder/Data/sep21pub.csv")
+vcl_supplement_raw = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/sep21pub.csv")
+
 
 ```
 Most relevant variables to focus on:
@@ -100,21 +103,22 @@ First we need to merge the two datasets:
 ```{python}
 vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
 
-#I found out the data type is int64 for one df and object for the other
+# I found out the data type is int64 for one df and object for the other
 
 cev_2021_raw = cev_2021_raw.astype(str)
 vcl_supplement_raw = vcl_supplement_raw.astype(str)
 
-#This finds all the variables in common between the two for a merge
-common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
+# This finds all the variables in common between the two for a merge
+common_keys = list(set(vcl_supplement_raw.columns).intersection(
+    set(cev_2021_raw.columns)))
 
 
-
-cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
+cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw,
+                        on=common_keys, how="outer")
 
 cev_all_2021.head(5)
 
-#Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
+# Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
 
 # We can use a config.py file to keep this readable. Full details are in the config.py file
 ``` 
@@ -166,13 +170,21 @@ If there are some entries in this column that are already coded "Yes" or "No", o
 #For testing purposes, delete later
 cev_pre_clean_test = cev_all_2021_filter.copy()
 
+```
+
+```{python}
 
 # Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
 # Import and reload config
+from pathlib import Path
+import os
+from us import states
+from config import add_engagement_score
+from config import *
 import importlib
 import config
 importlib.reload(config)
-from config import *
+
 
 # Replace FIPS codes with states
 
@@ -263,24 +275,64 @@ cev_all_2021_filter['Education_Level'] = cev_all_2021_filter['Education_Level'].
 cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(
     gtmetsta_dict)
 
-```
+# Debugging code - Before engagement score calculation
+print("Columns before adding engagement score:")
+print(cev_all_2021_filter.columns.tolist())
+print("\nShape before:", cev_all_2021_filter.shape)
 
-Lastly, export the cleaned data as a csv for plotting purposes
 
-```{python}
-import os
-from pathlib import Path
+# Mutate the engagement score variable we came up with in config.py
+cev_all_2021_filter = add_engagement_score(cev_all_2021_filter)
+
+
+# More debugging code
+print("\nColumns after adding engagement score:")
+print(cev_all_2021_filter.columns.tolist())
+print("\nShape after:", cev_all_2021_filter.shape)
+
+# Before saving
+print("\nVerifying engagement score columns exist:")
+print("'political_engagement_score' exists:",
+      'political_engagement_score' in cev_all_2021_filter.columns)
+print("'engagement_level' exists:",
+      'engagement_level' in cev_all_2021_filter.columns)
+
+
+# Lastly, export the cleaned data as a csv for plotting purposes
+
 
 shiny_data_path = Path("shiny-app/basic-app/data")
 
 # Create directory if it doesn't exist
 shiny_data_path.mkdir(parents=True, exist_ok=True)
 
-# Save dataset
+# Save with explicit column list to ensure all columns are included (debugging)
+columns_to_save = cev_all_2021_filter.columns.tolist()
 cev_all_2021_filter.to_csv(
-    shiny_data_path / "cev_2021_cleaned.csv", index=False)
+    shiny_data_path / "cev_2021_cleaned.csv",
+    columns=columns_to_save,
+    index=False
+)
+
+# Verify saved file - more debugging
+verification_df = pd.read_csv(shiny_data_path / "cev_2021_cleaned.csv")
+print("\nColumns in saved CSV:")
+print(verification_df.columns.tolist())
 
 print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
+
+```
+
+```{python}
+#For summary/debugging only
+print((cev_all_2021_filter["Volunteered_Past_Year"] == "Yes").sum())
+print(21482/255744)
+
+print(cev_all_2021_filter['political_engagement_score'].mean())
+```
+
+```{python}
+
 
 ```
 
@@ -389,13 +441,9 @@ Make dataframe where all data is aggregated by state, and then
 we can show correlation between measure of polarity and 
 the share of respondents in a state who did volunteer work.
 
-First, clean data to produce some geographic information:
+Clean data to produce some geographic information
 
-We will use V201014b, a variable that makes note of the state in 
-which a respondent is registered to vote, and use it to make a 
-variable called US State. We are using it to form US State 2, not US State, 
-because V201013a is US State, and that variable has fewer rows.
-
+V201013a
 ```{python}
 #Replace FIPS codes with states
 from us import states
@@ -469,7 +517,7 @@ that are some kind of Conservative, and the share of Republicans that are some k
 ```{python}
 
 
-def find_share(df, state):
+def find_share_state(df, state):
         #subset by state
         sub = df[df["US State 2"] == state]
         Party_People = ["Democrat", "Republican"]
@@ -501,35 +549,96 @@ def find_share(df, state):
         sub["Outliers"] = Outlier_box
         return sub
         
-Z = find_share(sub_polarization, "IL")                     
 
-IL_Group = Z.groupby("Party_Affiliation_(V201228)")[["Outliers", "Party_Count"]].sum().reset_index()
-
-IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count"])
 
 
 
 ```
 
-
-Make bigger function to hold everything together
+Make bigger function to produce results by each state by subsetting for a given state
 ```{python}
 
 def seek_polar(df, state):
-        mod_df = find_share(df, state)
+        mod_df = find_share_state(df, state)
         mod_df = mod_df.groupby(
             "Party_Affiliation_(V201228)"
             )[["Outliers", "Party_Count"]].sum().reset_index()
+
         mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
         return mod_df
 
 #Example with IL
 seek_polar(sub_polarization, "IL")
 
+```
+
+Make a function returning the number of outliers in a given state's party population as a share of that state's party population and graph
+
+Produce modified "nation" version of find_share()
+```{python}
+def find_share_nation(df):
+        Party_People = ["Democrat", "Republican"]
+        Conservatives = ["Slightly conservative",
+        "Conservative",
+        "Extremely conservative"]
+        Liberals = ["Extremely Liberal",
+        "Liberal", "Slightly Liberal"]
+        #count of partisans
+        Party_Count = []
+        #count of entries that are Dem but conservative or Repub but liberal
+        Outlier_box = []
+        #get Party_Count
+        for index, entry in df.iterrows():
+                if entry["Party_Affiliation_(V201228)"] in Party_People:
+                        Party_Count.append(1)
+                else:
+                        Party_Count.append(0)
+        
+        for index, entry in df.iterrows():
+                if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                        Outlier_box.append(1)
+                elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                        Outlier_box.append(1)
+                else:
+                        Outlier_box.append(0)
+        
+        df["Party_Count"] = Party_Count
+        df["Outliers"] = Outlier_box
+        return df
+
+```
+
+```{python}
+def polar_table(df):
+        mod_df = find_share_nation(df)
+        mod_df = mod_df.groupby("US State 2")[
+            ["Outliers", "Party_Count"]
+            ].sum().reset_index()
+        mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+        return mod_df
 
 
 ```
 
+Save to a dataframe
+```{python}
+polar_by_party = polar_table(sub_polarization)
+
+#graphing percentages
+percent_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Percent_Outliers", title = "Outlier Share"),
+    alt.Color("US State 2")
+)
+
+#graphing sums
+sum_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Outliers", title = "Outlier Sum"),
+    alt.Color("US State 2")
+)
+
+```
 
 Citation:  American National Election Studies. 2021. ANES 2020 Time Series 
 Study Full Release [dataset and documentation]. July 19, 2021 
@@ -542,13 +651,11 @@ version. www.electionstudies.org
         * You can also add additional dynamic plots into your app to substitute for a static plot. So, a `shiny` app with 3 dynamic plots will count for full credit.
 
 ```{python}
-_
+
 ```
 
 Exploratory graph of polarization
 ```{python}
-alt.data_transformers.enable("vegafusion")
-
 #create list for graph to sort on 
 sorting_list = [
         "Refused", "Don't Know", "Extremely Liberal",
@@ -561,9 +668,9 @@ sorting_list = [
     ]
 
 alt.Chart(sub_polarization).mark_bar().encode(
-    alt.X("Titles_(V201200):N", sort = sorting_list),
+    alt.X("Ideology_(V201200):N", sort = sorting_list),
     alt.Y("Observations"),
-    alt.Color("Titles_(V201200)")
+    alt.Color("Ideology_(V201200)")
 )
 
 
