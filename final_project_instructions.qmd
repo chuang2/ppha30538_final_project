@@ -596,7 +596,7 @@ def find_share_nation(df):
                         Party_Count.append(1)
                 else:
                         Party_Count.append(0)
-        
+        #get outlier count
         for index, entry in df.iterrows():
                 if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
                         Outlier_box.append(1)
@@ -614,6 +614,8 @@ def find_share_nation(df):
 ```{python}
 def polar_table(df):
         mod_df = find_share_nation(df)
+        #make a grouped df that takes sum of each states' outliers and 
+        #people who identify with a party
         mod_df = mod_df.groupby("US State 2")[
             ["Outliers", "Party_Count"]
             ].sum().reset_index()
@@ -721,7 +723,7 @@ ex_polarization = ex_polarization[
 
 #make column wehere L = 0 and C = 1 
 Extreme_L_C = [
-    0 if row["Ideology_(V201200)"] == "Extremely Liberal" else 1 
+    "Liberal" if row["Ideology_(V201200)"] == "Extremely Liberal" else "Conservative" 
     for index, row in ex_polarization.iterrows()
     ]
 
@@ -729,21 +731,67 @@ Extreme_L_C = [
 ex_polarization["Extreme_Position"] = Extreme_L_C
 
 #groupby Extreme_Position and US State 2 and get average Dem and Repub positioning
-position_groups = ex_polarization.groupby(["US State 2", "Extreme_Position"])[["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]].mean().reset_index()
+position_groups = ex_polarization.groupby(
+    ["US State 2", "Extreme_Position"])[
+        ["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]
+    ].mean().reset_index()
 ```
 
 Attribution: Asked ChatGPT for help fixing my list comprehension
 
 Use position_groups 
 ```{python}
-position_groups.groupby("US State 2")[]
+#pivot on Extreme_Position
+pivot_position = position_groups.pivot(
+    index = "US State 2", 
+    columns = "Extreme_Position", 
+    values = ["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]
+    )
 
+#reset index
+pivot_position = pivot_position.reset_index()
 
+#Flatten multi-index
+pivot_position.columns = ['_'.join(col).strip() for col in pivot_position.columns.values]
+
+#rename flattened columns
+pivot_position = pivot_position.rename(
+        columns = {
+            "US State 2_":"US State 2", 
+            "Dem_Positioning(V201206)_Conservative":"Dem_Position_C",
+            "Dem_Positioning(V201206)_Liberal":"Dem_Position_L",
+            "Repub_Positioning(V201207)_Conservative":"Repub_Position_C",
+            "Repub_Positioning(V201207)_Liberal":"Repub_Position_L"
+        }
+    )
+
+#capture spread variables
+pivot_position["Spread_Dem"] = abs(
+    pivot_position["Dem_Position_C"] - 
+    pivot_position["Dem_Position_L"]
+    )
+
+pivot_position["Spread_Repub"] = abs(
+    pivot_position["Repub_Position_C"] - 
+    pivot_position["Repub_Position_L"]
+    )
+
+```
+
+Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
+Asked ChatGPT how to flatten a multi-index column
+
+```{python}
+
+alt.Chart(pivot_position).mark_bar().encode(
+    alt.X("US State 2"),
+    alt.Y("Spread_Dem"),
+    alt.Color("US State 2")
+)
 
 
 
 ```
-
 
 Merge two datasets together on "US State 2"
 ```{python}
