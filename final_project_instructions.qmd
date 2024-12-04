@@ -336,13 +336,17 @@ print(cev_all_2021_filter['political_engagement_score'].mean())
 
 ```
 
+# American National Election Studies Data
+
+Link: https://electionstudies.org/data-center/2020-time-series-study/
+
 
 Read in data from American National Election Studies
 ```{python}
 polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
 ```
 
-Important elements of the ANES Codebook
+# Important elements of the ANES Codebook
 
 1. Note on geography:
 
@@ -400,7 +404,8 @@ sub_polarization = polarization.filter(items= subset_list)
 sub_polarization["Observations"] = 1
 ```
 
-Some more data cleaning
+# More Data Cleaning
+
 
 Analyzing Question V201200, which is a question asking:
 
@@ -650,9 +655,33 @@ In a paper on quantifying polarization written by Aaron Bramson et al (
 indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion. 
 It's essentially the 
 gap between the most extreme political positions. We (imperfectly) approximate this using two more variables:
-V201206 and V201207. These ask respondents to position political parties on the political spectrum. We can select
+V201206 and V201207. 
+
+These ask respondents to position political parties on the political spectrum. We can select
 the most ideologically distant nodes on the personal ideology scale (extremely liberal and extremely conservative)
 and capture how far apart their conceptions of each party are, and then disaggregate by state.
+
+We will assign the different ideological positions to 
+different points on a spectrum, namely:
+
+-3, -2, and -1 are "Extremely Liberal", 
+"Liberal",  and "Slightly Liberal"; 
+
+and:
+0 is "Moderate; middle of the road"; 
+
+finally 
+1, 2, and 3 are "Slightly conservative",
+"Conservative" and "Extremely conservative.""
+
+We'll then compare average positions by state. 
+For example, if the average 
+extremely liberal respondent in Texas 
+places Democrats at at -1 (slightly liberal)
+and the average for the extremely conservative
+respondents in -3 (extremely liberal), then the 
+distance between the two is 4, meaning Texas would have a
+spread of 4 for this question.
 
 Crosswalk V201206 and V201207
 ```{python}
@@ -721,7 +750,7 @@ ex_polarization = ex_polarization[
     ]
 
 
-#make column wehere L = 0 and C = 1 
+#make column for Liberal (i.e. Left tail) and Conservative (i.e. Right tail) 
 Extreme_L_C = [
     "Liberal" if row["Ideology_(V201200)"] == "Extremely Liberal" else "Conservative" 
     for index, row in ex_polarization.iterrows()
@@ -730,7 +759,7 @@ Extreme_L_C = [
 #save to dataframe
 ex_polarization["Extreme_Position"] = Extreme_L_C
 
-#groupby Extreme_Position and US State 2 and get average Dem and Repub positioning
+#groupby Extreme_Position and US State 2 and get average Dem and Repub positioning. Then save this to a df called position_groups
 position_groups = ex_polarization.groupby(
     ["US State 2", "Extreme_Position"])[
         ["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]
@@ -739,7 +768,12 @@ position_groups = ex_polarization.groupby(
 
 Attribution: Asked ChatGPT for help fixing my list comprehension
 
-Use position_groups 
+Use position_groups to create a df that has 4 columns:
+(1) The position Liberals give Democrats on the spectrum
+(2) the position Conservatives give Democrats on the spectrum
+(3) the position Liberals give Republicans on the spectrum
+(4) the position Conservatives give Republicans on the spectrum
+
 ```{python}
 #pivot on Extreme_Position
 pivot_position = position_groups.pivot(
@@ -748,10 +782,11 @@ pivot_position = position_groups.pivot(
     values = ["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]
     )
 
-#reset index
+#reset index to retrieve US State 2 variable from index
 pivot_position = pivot_position.reset_index()
 
-#Flatten multi-index
+#Flatten multi-index by joining the upper and lower
+#levels of the multi-indexed columns together
 pivot_position.columns = ['_'.join(col).strip() for col in pivot_position.columns.values]
 
 #rename flattened columns
@@ -764,7 +799,21 @@ pivot_position = pivot_position.rename(
             "Repub_Positioning(V201207)_Liberal":"Repub_Position_L"
         }
     )
+```
 
+https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
+Asked ChatGPT how to flatten a multi-index column
+
+Now, use those 4 columns to create the spread, meaning
+the absolute value of the difference betweeen:
+
+(1) 
+The position Liberals give Democrats on the spectrum and the position Conservatives give Democrats on the spectrum
+
+(2) 
+the position Liberals give Republicans on the spectrum and the position Conservatives give Republicans on the spectrum
+
+```{python}
 #capture spread variables
 pivot_position["Spread_Dem"] = abs(
     pivot_position["Dem_Position_C"] - 
@@ -781,11 +830,17 @@ pivot_position["Spread_Repub"] = abs(
 Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
 Asked ChatGPT how to flatten a multi-index column
 
+Now, graph those differences, we're going to interpret these 
+spreads as an indicator of polarization, acknowledging that 
+this is too simple an analysis to account for the full 
+complexity of this kind of measurement (limitations will 
+be discussed in write-up)
 ```{python}
 
-alt.Chart(pivot_position).mark_bar().encode(
-    alt.X("US State 2"),
-    alt.Y("Spread_Dem"),
+Democratic_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Spread_Dem", 
+    title = "Spread of Views on Democratic Party Ideological Position"),
     alt.Color("US State 2")
 )
 
