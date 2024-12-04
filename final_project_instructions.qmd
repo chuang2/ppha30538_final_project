@@ -369,7 +369,7 @@ List 1: This list contains only pre-election data, it is designed to capture var
 covering some geographic information (V201011, V201013a, V201013b, V201014a, V201014b)
 
 List 2: This list contains only pre-election data, it is designed to capture variables
-covering information about self-assessments of political positioning
+covering information about assessments of political positioning
 (i.e. left, right, center)
 ```{python}
 #list 1
@@ -441,7 +441,10 @@ Make dataframe where all data is aggregated by state, and then
 we can show correlation between measure of polarity and 
 the share of respondents in a state who did volunteer work.
 
-Clean data to produce some geographic information
+Clean data to produce some geographic information. Note that we have two US State variables, with only
+"US State 2" being used in analysis, purely because it has more in-universe entries. This appears to 
+be partially due to respondent reactions to different questions, and partially due to information 
+restrictions on the dataset.
 
 V201013a
 ```{python}
@@ -640,7 +643,114 @@ sum_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
 
 ```
 
-Citation:  American National Election Studies. 2021. ANES 2020 Time Series 
+In a paper on quantifying polarization written by Aaron Bramson et al (
+    https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization
+indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion. 
+It's essentially the 
+gap between the most extreme political positions. We (imperfectly) approximate this using two more variables:
+V201206 and V201207. These ask respondents to position political parties on the political spectrum. We can select
+the most ideologically distant nodes on the personal ideology scale (extremely liberal and extremely conservative)
+and capture how far apart their conceptions of each party are, and then disaggregate by state.
+
+Crosswalk V201206 and V201207
+```{python}
+crosswalk_V201206 = pd.DataFrame({
+    #the dataset's scaled
+    "Dem_Num_(V201206)":[-9, -8, 1, 2, 3, 4, 5, 6, 7],
+    #the dataset's ideology
+    "Dem_Ideology_(V201206)": [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly conservative",
+        "Conservative",
+        "Extremely conservative"
+    ],
+    #new values for comparison
+    "Dem_Positioning(V201206)":[0, 0, -3, -2, -1, 0, 1, 2, 3]
+    })
+
+#They're exactly the same
+crosswalk_V201207 = pd.DataFrame({
+    #the dataset's scale
+    "Repub_Num_(V201207)":[-9, -8, 1, 2, 3, 4, 5, 6, 7],
+    #the dataset's ideology
+    "Repub_Ideology_(V201207)": [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly conservative",
+        "Conservative",
+        "Extremely conservative"
+    ],
+    #new values for comparison
+    "Repub_Positioning(V201207)":[0, 0, -3, -2, -1, 0, 1, 2, 3]
+    })
+
+#crosswalking V201206
+sub_polarization = sub_polarization.merge(crosswalk_V201206, left_on = "V201206", right_on = "Dem_Num_(V201206)")
+
+#crosswalking V201207
+sub_polarization = sub_polarization.merge(crosswalk_V201207, left_on = "V201207", right_on = "Repub_Num_(V201207)")
+
+#drop Dem_Num and Repub_Num for clarity (we'll be using the reassigned numbers)
+sub_polarization = sub_polarization.drop(["Dem_Num_(V201206)", "Repub_Num_(V201207)"], axis = 1)
+```
+
+Use the Positioning columns to compare the average party position 
+selections between the 2 extremes
+
+Step 1: First grouping
+```{python}
+
+#filter out all self-identifiers that aren't "Extremely Liberal"
+#or Extremely Conservative
+ex_polarization = sub_polarization[
+    (sub_polarization["Ideology_(V201200)"] == "Extremely conservative") | 
+    (sub_polarization["Ideology_(V201200)"] == "Extremely Liberal")
+    ]
+
+#filter out entries of Party Ideology Position that are "Don't Know" and "Refused"
+ex_polarization = ex_polarization[
+    (sub_polarization["Dem_Ideology_(V201206)"] != "Don't Know") &
+    (sub_polarization["Dem_Ideology_(V201206)"] != "Refused") &
+    (sub_polarization["Repub_Ideology_(V201207)"] != "Don't Know") &
+    (sub_polarization["Repub_Ideology_(V201207)"] != "Refused") 
+    ]
+
+
+#make column wehere L = 0 and C = 1 
+Extreme_L_C = [
+    0 if row["Ideology_(V201200)"] == "Extremely Liberal" else 1 
+    for index, row in ex_polarization.iterrows()
+    ]
+
+#save to dataframe
+ex_polarization["Extreme_Position"] = Extreme_L_C
+
+#groupby Extreme_Position and US State 2 and get average Dem and Repub positioning
+position_groups = ex_polarization.groupby(["US State 2", "Extreme_Position"])[["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]].mean().reset_index()
+```
+
+Attribution: Asked ChatGPT for help fixing my list comprehension
+
+Use position_groups 
+```{python}
+position_groups.groupby("US State 2")[]
+
+
+
+
+
+```
+
+
+Merge two datasets together on "US State 2"
+```{python}
+
+```
+
+Citation for ANES:  American National Election Studies. 2021. ANES 2020 Time Series 
 Study Full Release [dataset and documentation]. July 19, 2021 
 version. www.electionstudies.org 
 
@@ -656,6 +766,7 @@ version. www.electionstudies.org
 
 Exploratory graph of polarization
 ```{python}
+alt.data_transformers.enable("vegafusion")
 #create list for graph to sort on 
 sorting_list = [
         "Refused", "Don't Know", "Extremely Liberal",
