@@ -340,6 +340,9 @@ print(cev_all_2021_filter['political_engagement_score'].mean())
 
 Link: https://electionstudies.org/data-center/2020-time-series-study/
 
+Citation for ANES:  American National Election Studies. 2021. ANES 2020 Time Series 
+Study Full Release [dataset and documentation]. July 19, 2021 
+version. www.electionstudies.org 
 
 Read in data from American National Election Studies
 ```{python}
@@ -412,13 +415,13 @@ Analyzing Question V201200, which is a question asking:
 "Where would you place yourself on this scale, or haven’t you
  thought much about this?
  Value Labels-9. Refused -8. Don’t know 
-1. Extremely liberal 
+1. Extremely Liberal 
 2. Liberal 
-3. Slightly liberal 
+3. Slightly Liberal 
 4. Moderate; middle of the road 
-5. Slightly conservative 
+5. Slightly Conservative 
 6. Conservative 
-7. Extremely conservative 
+7. Extremely Conservative 
 99. Haven’t thought much about this"
 
 ```{python}
@@ -430,9 +433,9 @@ crosswalk_polar = pd.DataFrame({
         "Refused", "Don't Know", "Extremely Liberal",
         "Liberal", "Slightly Liberal", 
         "Moderate; middle of the road",
-        "Slightly conservative",
+        "Slightly Conservative",
         "Conservative",
-        "Extremely conservative",
+        "Extremely Conservative",
         "Haven’t thought much about this"
     ]
     })
@@ -529,9 +532,9 @@ def find_share_state(df, state):
         #subset by state
         sub = df[df["US State 2"] == state]
         Party_People = ["Democrat", "Republican"]
-        Conservatives = ["Slightly conservative",
+        Conservatives = ["Slightly Conservative",
         "Conservative",
-        "Extremely conservative"]
+        "Extremely Conservative"]
         Liberals = ["Extremely Liberal",
         "Liberal", "Slightly Liberal"]
         #count of partisans
@@ -586,9 +589,9 @@ Produce modified "nation" version of find_share()
 ```{python}
 def find_share_nation(df):
         Party_People = ["Democrat", "Republican"]
-        Conservatives = ["Slightly conservative",
+        Conservatives = ["Slightly Conservative",
         "Conservative",
-        "Extremely conservative"]
+        "Extremely Conservative"]
         Liberals = ["Extremely Liberal",
         "Liberal", "Slightly Liberal"]
         #count of partisans
@@ -693,9 +696,9 @@ crosswalk_V201206 = pd.DataFrame({
         "Refused", "Don't Know", "Extremely Liberal",
         "Liberal", "Slightly Liberal", 
         "Moderate; middle of the road",
-        "Slightly conservative",
+        "Slightly Conservative",
         "Conservative",
-        "Extremely conservative"
+        "Extremely Conservative"
     ],
     #new values for comparison
     "Dem_Positioning(V201206)":[0, 0, -3, -2, -1, 0, 1, 2, 3]
@@ -710,9 +713,9 @@ crosswalk_V201207 = pd.DataFrame({
         "Refused", "Don't Know", "Extremely Liberal",
         "Liberal", "Slightly Liberal", 
         "Moderate; middle of the road",
-        "Slightly conservative",
+        "Slightly Conservative",
         "Conservative",
-        "Extremely conservative"
+        "Extremely Conservative"
     ],
     #new values for comparison
     "Repub_Positioning(V201207)":[0, 0, -3, -2, -1, 0, 1, 2, 3]
@@ -737,7 +740,7 @@ Step 1: First grouping
 #filter out all self-identifiers that aren't "Extremely Liberal"
 #or Extremely Conservative
 ex_polarization = sub_polarization[
-    (sub_polarization["Ideology_(V201200)"] == "Extremely conservative") | 
+    (sub_polarization["Ideology_(V201200)"] == "Extremely Conservative") | 
     (sub_polarization["Ideology_(V201200)"] == "Extremely Liberal")
     ]
 
@@ -848,14 +851,26 @@ Democratic_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
 
 ```
 
-Merge two datasets together on "US State 2"
+Merge the two datasets together on "US State 2"
 ```{python}
+merged_polarization = sub_polarization.merge(pivot_position, left_on = "US State 2", right_on = "US State 2", how = "outer")
+
+#drop variables that don't make sense when merged
+merged_polarization = merged_polarization.drop([
+    "Dem_Position_C", "Dem_Position_L",
+    "Repub_Position_C", "Repub_Position_L"], 
+    axis = 1
+    )
 
 ```
 
-Citation for ANES:  American National Election Studies. 2021. ANES 2020 Time Series 
-Study Full Release [dataset and documentation]. July 19, 2021 
-version. www.electionstudies.org 
+Note that this merged dataset could be misleading, because some of the
+merged variables only apply to the "extreme" respondents in each 
+state, and so it's not representative of the entire state's respondents' 
+positioning of different parties. So we've dropped those variables
+from the merge.
+
+
 
 
 2. Plotting (25%)
@@ -875,9 +890,9 @@ sorting_list = [
         "Refused", "Don't Know", "Extremely Liberal",
         "Liberal", "Slightly Liberal", 
         "Moderate; middle of the road",
-        "Slightly conservative",
+        "Slightly Conservative",
         "Conservative",
-        "Extremely conservative",
+        "Extremely Conservative",
         "Haven’t thought much about this"
     ]
 
