@@ -961,12 +961,23 @@ complexity of this kind of measurement (limitations will
 be discussed in write-up)
 ```{python}
 
+#Opinion on the position of the Democratic Party
 Democratic_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
     alt.X("US State 2", title = "State"),
     alt.Y("Spread_Dem", 
-    title = "Spread of Views on Democratic Party Ideological Position"),
+    title = "Spread of Views"),
     alt.Color("US State 2")
-)
+).properties(title = alt.TitleParams("Spread of Views on Democratic Party Ideological Position"))
+
+#Opinion on the position of the Republican Party
+Republican_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Spread_Repub", 
+    title = "Spread of Views"),
+    alt.Color("US State 2")
+).properties(title = alt.TitleParams("Spread of Views on Republican Party Ideological Position"))
+
+
 
 
 
