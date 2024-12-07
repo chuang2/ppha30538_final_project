@@ -14,7 +14,7 @@
         "  warning: false\n",
         "---"
       ],
-      "id": "c580f19e"
+      "id": "53cf310f"
     },
     {
       "cell_type": "code",
@@ -33,7 +33,7 @@
         "# for spatial data\n",
         "from us import states  # Background"
       ],
-      "id": "5b851a1b",
+      "id": "98dac2fb",
       "execution_count": null,
       "outputs": []
     },
@@ -66,7 +66,7 @@
         "\n",
         "https://drive.google.com/drive/folders/1PUTN2pyh78MLoK0RVtGnf1ZwiM1BAAuV?usp=sharing\n"
       ],
-      "id": "e2fda14b"
+      "id": "090735ac"
     },
     {
       "cell_type": "code",
@@ -81,7 +81,7 @@
         "\n",
         "polarization = pd.read_csv(\"/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/anes_timeseries_2020_csv_20220210.csv\")"
       ],
-      "id": "0b544303",
+      "id": "09e26773",
       "execution_count": null,
       "outputs": []
     },
@@ -206,7 +206,7 @@
         "\n",
         "# 7. Coding Analysis (Not Shown in Writeup)\n"
       ],
-      "id": "c0260d13"
+      "id": "53e70ad0"
     },
     {
       "cell_type": "code",
@@ -228,7 +228,7 @@
         "\n",
         "# We can use a config.py file to keep this readable. Full details are in the config.py file"
       ],
-      "id": "d99a64f9",
+      "id": "3d29efaf",
       "execution_count": null,
       "outputs": []
     },
@@ -253,7 +253,7 @@
         "#Debugging: removing duplicate column(s)\n",
         "cev_all_2021_filter = cev_all_2021_filter.loc[:, ~cev_all_2021_filter.columns.duplicated()]"
       ],
-      "id": "17041e54",
+      "id": "a774c62d",
       "execution_count": null,
       "outputs": []
     },
@@ -358,7 +358,7 @@
         "cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(\n",
         "    gtmetsta_dict)"
       ],
-      "id": "c80785bf",
+      "id": "8ffb28a2",
       "execution_count": null,
       "outputs": []
     },
@@ -393,7 +393,7 @@
         "#of entries\n",
         "sub_polarization[\"Observations\"] = 1"
       ],
-      "id": "ce4d36a8",
+      "id": "95e8b366",
       "execution_count": null,
       "outputs": []
     },
@@ -424,7 +424,7 @@
         "print(\"'engagement_level' exists:\",\n",
         "      'engagement_level' in cev_all_2021_filter.columns)"
       ],
-      "id": "901623d7",
+      "id": "09b43dfb",
       "execution_count": null,
       "outputs": []
     },
@@ -432,7 +432,8 @@
       "cell_type": "code",
       "metadata": {},
       "source": [
-        "#confirm this code exports the data into the 'data' folder into the repo\n",
+        "# confirm this code exports the data into the 'data' folder into the repo\n",
+        "from pathlib import Path\n",
         "\n",
         "\n",
         "# Lastly, export the cleaned data as a csv for plotting purposes\n",
@@ -447,7 +448,7 @@
         "\n",
         "print(f\"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}\")"
       ],
-      "id": "82b5aea8",
+      "id": "56a39df4",
       "execution_count": null,
       "outputs": []
     },
@@ -490,7 +491,7 @@
         "#of entries\n",
         "sub_polarization[\"Observations\"] = 1"
       ],
-      "id": "7bbed9b7",
+      "id": "7088f5e7",
       "execution_count": null,
       "outputs": []
     },
@@ -533,7 +534,7 @@
         "\n",
         "#We use this data to make a dataframe aggregated by state, and then we can show correlation between measure of polarity and the share of respondents in a state who did volunteer work."
       ],
-      "id": "94b276f4",
+      "id": "1b98fc95",
       "execution_count": null,
       "outputs": []
     },
@@ -553,7 +554,7 @@
         "\n",
         "sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_state)\n"
       ],
-      "id": "0142f246",
+      "id": "22e066ed",
       "execution_count": null,
       "outputs": []
     },
@@ -588,7 +589,7 @@
         "sub_polarization = sub_polarization.merge(\n",
         "    crosswalk_party_2, left_on=\"V201228\", right_on=\"Party_Numbers_(V201228)\")\n"
       ],
-      "id": "c9a401c5",
+      "id": "6cd930d5",
       "execution_count": null,
       "outputs": []
     },
@@ -600,7 +601,7 @@
         "\n",
         "1. Share of Outliers - we create a series of functions that group respondents by party Democrats with conservative-leaning ideologies, and Republicans with liberal-leaning ones. \n"
       ],
-      "id": "681be7e4"
+      "id": "37981887"
     },
     {
       "cell_type": "code",
@@ -651,7 +652,7 @@
         "\n",
         "IL_Group[\"Percent_Outliers\"] =  IL_Group[\"Outliers\"] / sum(IL_Group[\"Party_Count\"])\n"
       ],
-      "id": "e9b35965",
+      "id": "85a969ae",
       "execution_count": null,
       "outputs": []
     },
@@ -675,7 +676,7 @@
         "#Example with IL\n",
         "seek_polar(sub_polarization, \"IL\")\n"
       ],
-      "id": "b73ab3ba",
+      "id": "b09e4e25",
       "execution_count": null,
       "outputs": []
     },
@@ -718,7 +719,7 @@
         "    sub[\"Outliers\"] = Outlier_box\n",
         "    return sub\n"
       ],
-      "id": "41c0c5e1",
+      "id": "9b2f038f",
       "execution_count": null,
       "outputs": []
     },
@@ -759,7 +760,7 @@
         "    df[\"Outliers\"] = Outlier_box\n",
         "    return df"
       ],
-      "id": "29bde577",
+      "id": "cddccf22",
       "execution_count": null,
       "outputs": []
     },
@@ -780,7 +781,7 @@
         "    mod_df[\"Percent_Outliers\"] =  mod_df[\"Outliers\"] / sum(mod_df[\"Party_Count\"])\n",
         "    return mod_df\n"
       ],
-      "id": "e5f58130",
+      "id": "fc535c5f",
       "execution_count": null,
       "outputs": []
     },
@@ -804,7 +805,7 @@
         "    alt.Color(\"US State 2\")\n",
         ")"
       ],
-      "id": "33462151",
+      "id": "7e201320",
       "execution_count": null,
       "outputs": []
     },
@@ -875,7 +876,7 @@
         "#drop Dem_Num and Repub_Num for clarity (we'll be using the reassigned numbers)\n",
         "sub_polarization = sub_polarization.drop([\"Dem_Num_(V201206)\", \"Repub_Num_(V201207)\"], axis = 1)"
       ],
-      "id": "f38a02b6",
+      "id": "2bfb8d55",
       "execution_count": null,
       "outputs": []
     },
@@ -915,7 +916,7 @@
         "#groupby Extreme_Position and US State 2 and get average Dem and Repub positioning. Then save this to a df called position_groups\n",
         "position_groups = ex_polarization.groupby([\"US State 2\", \"Extreme_Position\"])[[\"Dem_Positioning(V201206)\", \"Repub_Positioning(V201207)\"]].mean().reset_index()"
       ],
-      "id": "c7d12b70",
+      "id": "cad9836b",
       "execution_count": null,
       "outputs": []
     },
@@ -959,7 +960,7 @@
         "        }\n",
         "    )\n"
       ],
-      "id": "51303896",
+      "id": "6612f6c4",
       "execution_count": null,
       "outputs": []
     },
@@ -988,7 +989,7 @@
         "    pivot_position[\"Repub_Position_L\"]\n",
         "    )"
       ],
-      "id": "b8dc184d",
+      "id": "62733773",
       "execution_count": null,
       "outputs": []
     },
@@ -1018,7 +1019,7 @@
         "    alt.Color(\"US State 2\")\n",
         ").properties(title = alt.TitleParams(\"Spread of Views on Republican Party Ideological Position\"))"
       ],
-      "id": "31875f05",
+      "id": "4c9345a6",
       "execution_count": null,
       "outputs": []
     },
@@ -1038,7 +1039,7 @@
         "    axis = 1\n",
         "    )"
       ],
-      "id": "921b1302",
+      "id": "764313f4",
       "execution_count": null,
       "outputs": []
     },
@@ -1069,7 +1070,7 @@
         "    pivot_position, left_on = \"US State\", right_on = \"US State 2\"\n",
         ")"
       ],
-      "id": "ab4d48d2",
+      "id": "bbf5a005",
       "execution_count": null,
       "outputs": []
     },
@@ -1122,7 +1123,7 @@
         "            )\n",
         "        return graph"
       ],
-      "id": "ebda8e92",
+      "id": "1bec3e4c",
       "execution_count": null,
       "outputs": []
     },
@@ -1137,7 +1138,7 @@
         "\n",
         "print(Sample_Table)"
       ],
-      "id": "0e82c85a",
+      "id": "682206d5",
       "execution_count": null,
       "outputs": []
     },
@@ -1159,7 +1160,7 @@
         "Dem_Graph_Spread_2.show()\n",
         "Dem_Graph_Spread_2.save('dem_graph_spread_2.png', format='png')"
       ],
-      "id": "e568ac7a",
+      "id": "2d0dc20c",
       "execution_count": null,
       "outputs": []
     },
@@ -1180,7 +1181,7 @@
         "Repub_Graph_Spread_2.show()\n",
         "Repub_Graph_Spread_2.save('repub_graph_spread_2.png', format='png')"
       ],
-      "id": "9b799dd1",
+      "id": "cd8f11f4",
       "execution_count": null,
       "outputs": []
     },
@@ -1190,7 +1191,7 @@
       "source": [
         "Below is a atatic graph of ideological position in the US nationally as of 2020:\n"
       ],
-      "id": "3b00f07e"
+      "id": "18ae6ee7"
     },
     {
       "cell_type": "code",
@@ -1233,7 +1234,7 @@
         "\n",
         "#Note: We removed non-responses, likely creating a bias in the relative size of the remaining groups (it's difficult to predict the direction of said bias, however.)"
       ],
-      "id": "47ab96b9",
+      "id": "22b93924",
       "execution_count": null,
       "outputs": []
     },
@@ -1281,7 +1282,7 @@
         "\n",
         "Ideological_Position_IL.show()"
       ],
-      "id": "04b53182",
+      "id": "4c061ed6",
       "execution_count": null,
       "outputs": []
     },
@@ -1306,7 +1307,7 @@
         "\n",
         "Correlation_Graph.show()"
       ],
-      "id": "4084ae3b",
+      "id": "ebcdaf08",
       "execution_count": null,
       "outputs": []
     },
@@ -1343,7 +1344,7 @@
         "chart.show()\n",
         "chart.save('volunteer_frequency.png', format='png')"
       ],
-      "id": "cb6a35d7",
+      "id": "d87d15c2",
       "execution_count": null,
       "outputs": []
     },
@@ -1395,7 +1396,7 @@
         "chart.show()\n",
         "chart.save('if_volunteered_last_year.png', format='png')"
       ],
-      "id": "5eb0da9a",
+      "id": "42ad3bd1",
       "execution_count": null,
       "outputs": []
     },
@@ -1450,7 +1451,7 @@
         "chart.show()\n",
         "chart.save('if_voted_in_local_election.png', format='png')"
       ],
-      "id": "877e1b85",
+      "id": "5072e990",
       "execution_count": null,
       "outputs": []
     },
@@ -1511,7 +1512,7 @@
         "chart.show()\n",
         "chart.save('news_consumption_volunteering_correlation.png', format='png')"
       ],
-      "id": "3d005441",
+      "id": "49a0f83d",
       "execution_count": null,
       "outputs": []
     },
@@ -1557,7 +1558,7 @@
         "chart.show()\n",
         "chart.save('volunteering_vs_voting_news_daily.png', format='png')"
       ],
-      "id": "d48f69c8",
+      "id": "d3d868c5",
       "execution_count": null,
       "outputs": []
     },
@@ -1590,7 +1591,7 @@
         "chart.show()\n",
         "chart.save('boxplot_news_consumption_vs_volunteering_hours.png', format='png')"
       ],
-      "id": "34d0b7a3",
+      "id": "226b6455",
       "execution_count": null,
       "outputs": []
     },
@@ -1613,7 +1614,7 @@
         "\n",
         "average_hours_per_states = average_hours_per_state.sort_values(by='Hours_Spent_Volunteering', ascending=False)"
       ],
-      "id": "f1a61945",
+      "id": "aafae95b",
       "execution_count": null,
       "outputs": []
     },
@@ -1627,14 +1628,14 @@
         "    5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])\n",
         "\n",
         "top_bottom_labels = alt.Chart(top_bottom_states).mark_text(\n",
-        "    align='left',  # Align text to the left of the point\n",
+        "    align='left',  # Align labels to the left of points\n",
         "    baseline='middle',\n",
-        "    dx=10  # Offset text slightly from the points\n",
+        "    dx=7  # Offset text slightly from the point\n",
         ").encode(\n",
         "    x=alt.X('US State:N', title='US State', sort='-y'),\n",
         "    y=alt.Y('Hours_Spent_Volunteering:Q',\n",
         "            title='Average Hours Spent Volunteering'),\n",
-        "    # Add text from the Hours_Spent_Volunteering column\n",
+        "    # Add text labels with volunteering hours\n",
         "    text=alt.Text('Hours_Spent_Volunteering:Q')\n",
         ")\n",
         "\n",
@@ -1643,12 +1644,11 @@
         "    y=alt.Y('Hours_Spent_Volunteering:Q',\n",
         "            title='Average Hours Spent Volunteering')\n",
         ")\n",
-        "chart = scatter_plot + top_bottom_labels\n",
         "\n",
         "chart = chart.properties(\n",
         "    title='Top 5 and Bottom 5 States by Average Hours Spent Volunteering',\n",
         "    width=400,\n",
-        "    height=00\n",
+        "    height=300\n",
         ").configure_axisY(\n",
         "    labelAngle=0\n",
         ").configure_axisX(\n",
@@ -1657,7 +1657,7 @@
         "chart.show()\n",
         "chart.save('top_bottom_5_states_avg_volunteering.png', format='png')"
       ],
-      "id": "e3d129b3",
+      "id": "70049b31",
       "execution_count": null,
       "outputs": []
     },
@@ -1698,7 +1698,7 @@
         "final_chart = chart + text\n",
         "final_chart"
       ],
-      "id": "a84f8066",
+      "id": "b1613156",
       "execution_count": null,
       "outputs": []
     },
@@ -1708,7 +1708,7 @@
       "source": [
         "final_chart.save('number_volunteers_per_state.png', format='png')"
       ],
-      "id": "0d251d87",
+      "id": "07008dc1",
       "execution_count": null,
       "outputs": []
     },
@@ -1764,7 +1764,7 @@
         "chart.show()\n",
         "chart.save('boycotted.png', format='png')"
       ],
-      "id": "d721c99e",
+      "id": "69843a25",
       "execution_count": null,
       "outputs": []
     },
@@ -1774,7 +1774,7 @@
       "source": [
         "# same as above except now if person contacted public official"
       ],
-      "id": "21a70b2e"
+      "id": "c040aba7"
     },
     {
       "cell_type": "code",
@@ -1823,7 +1823,7 @@
         "chart.show()\n",
         "chart.save('contacted.png', format='png')"
       ],
-      "id": "77bfd7f2",
+      "id": "c3364cb3",
       "execution_count": null,
       "outputs": []
     }
