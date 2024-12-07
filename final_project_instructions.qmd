@@ -39,9 +39,6 @@ import geopandas as gpd
 
 # shiny framework
 from shiny import App, ui, render
-
-#for spatial data
-
 ```
 
 ```{python}
@@ -100,20 +97,19 @@ First we need to merge the two datasets:
 ```{python}
 vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
 
-# I found out the data type is int64 for one df and object for the other
+#I found out the data type is int64 for one df and object for the other
 
 cev_2021_raw = cev_2021_raw.astype(str)
 vcl_supplement_raw = vcl_supplement_raw.astype(str)
 
-# This finds all the variables in common between the two for a merge
-common_keys = list(set(vcl_supplement_raw.columns).intersection(
-    set(cev_2021_raw.columns)))
-cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw,
-                        on=common_keys, how="outer")
+#This finds all the variables in common between the two for a merge
+common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))
+
+cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how="outer")
 
 cev_all_2021.head(5)
 
-# Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
+#Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique
 
 # We can use a config.py file to keep this readable. Full details are in the config.py file
 ``` 
@@ -165,21 +161,14 @@ If there are some entries in this column that are already coded "Yes" or "No", o
 #For testing purposes, delete later
 cev_pre_clean_test = cev_all_2021_filter.copy()
 
-```
-
-```{python}
 
 # Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
 # Import and reload config
-from pathlib import Path
-import os
-from us import states
-from config import add_engagement_score
-from config import *
 import importlib
 import config
 importlib.reload(config)
-
+from config import *
+import us as states
 
 # Replace FIPS codes with states
 
@@ -270,64 +259,24 @@ cev_all_2021_filter['Education_Level'] = cev_all_2021_filter['Education_Level'].
 cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(
     gtmetsta_dict)
 
-# Debugging code - Before engagement score calculation
-print("Columns before adding engagement score:")
-print(cev_all_2021_filter.columns.tolist())
-print("\nShape before:", cev_all_2021_filter.shape)
+```
 
+Lastly, export the cleaned data as a csv for plotting purposes
 
-# Mutate the engagement score variable we came up with in config.py
-cev_all_2021_filter = add_engagement_score(cev_all_2021_filter)
-
-
-# More debugging code
-print("\nColumns after adding engagement score:")
-print(cev_all_2021_filter.columns.tolist())
-print("\nShape after:", cev_all_2021_filter.shape)
-
-# Before saving
-print("\nVerifying engagement score columns exist:")
-print("'political_engagement_score' exists:",
-      'political_engagement_score' in cev_all_2021_filter.columns)
-print("'engagement_level' exists:",
-      'engagement_level' in cev_all_2021_filter.columns)
-
-
-# Lastly, export the cleaned data as a csv for plotting purposes
-
+```{python}
+import os
+from pathlib import Path
 
 shiny_data_path = Path("shiny-app/basic-app/data")
 
 # Create directory if it doesn't exist
 shiny_data_path.mkdir(parents=True, exist_ok=True)
 
-# Save with explicit column list to ensure all columns are included (debugging)
-columns_to_save = cev_all_2021_filter.columns.tolist()
+# Save dataset
 cev_all_2021_filter.to_csv(
-    shiny_data_path / "cev_2021_cleaned.csv",
-    columns=columns_to_save,
-    index=False
-)
-
-# Verify saved file - more debugging
-verification_df = pd.read_csv(shiny_data_path / "cev_2021_cleaned.csv")
-print("\nColumns in saved CSV:")
-print(verification_df.columns.tolist())
+    shiny_data_path / "cev_2021_cleaned.csv", index=False)
 
 print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
-
-```
-
-```{python}
-#For summary/debugging only
-print((cev_all_2021_filter["Volunteered_Past_Year"] == "Yes").sum())
-print(21482/255744)
-
-print(cev_all_2021_filter['political_engagement_score'].mean())
-```
-
-```{python}
-
 
 ```
 
@@ -448,130 +397,6 @@ sub_polarization['US State'] = pd.to_numeric(sub_polarization['V201013a'], error
 
 sub_polarization['US State'] = sub_polarization['US State'].map(fips_to_state)
 
-sub_polarization["US State 2"] = pd.to_numeric(sub_polarization['V201014b'], errors='coerce')
-
-sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_state)
-
-
-```
-
-Then, make data using V201018, which asks:  What political party are you registered with, if any?
-
--9. Refused -8. Don’t know -1. Inapplicable 
-1 Democratic party 
-2 Republican party
- 4  None or ‘independent’ 
-5 Other {SPECIFY}
-
-```{python}
-crosswalk_party = pd.DataFrame({
-    "Party_Numbers_(V201018)":[-9, -8, -1, 1, 2, 4, 5],
-    "Party_Affiliation_(V201018)":[
-        "Refused", "Don't know", "Inapplicable", "Democratic party",
-        "Republican party", "None or independent", "Other"
-        ]})
-
-sub_polarization = sub_polarization.merge(crosswalk_party, left_on = "V201018", right_on = "Party_Numbers_(V201018)")
-
-```
-
-Going to switch to a different marker for political party due to some challenges with V201018
-Now using: V201228, which asks:
-
-"Generally speaking, do you usually think of yourself as [a
-Democrat, a Republican / a Republican, a Democrat], an
-independent, or what?"
-
--9. Refused
--8. Don’t know
--4. Technical error
-0. No preference {VOL - video/phone only}
-1. Democrat
-2. Republican
-3. Independent
-5. Other party {SPECIFY}
-
-```{python}
-crosswalk_party_2 = pd.DataFrame({
-    "Party_Numbers_(V201228)":[-9, -8, -4, 0, 1, 2, 3, 5],
-    "Party_Affiliation_(V201228)":[
-        "Refused", "Don't know", "Technical error", "No Preference", "Democrat",
-        "Republican", "Independent", "Other party"
-        ]})
-
-sub_polarization = sub_polarization.merge(crosswalk_party_2, left_on = "V201228", right_on = "Party_Numbers_(V201228)")
-
-
-```
-
-
-Following that, make function that subsets by state, and then groups
-by political party, and then returns the share of Democrats
-that are some kind of Conservative, and the share of Republicans that are some kind of Liberal
-```{python}
-
-
-def find_share(df, state):
-        #subset by state
-        sub = df[df["US State 2"] == state]
-        Party_People = ["Democrat", "Republican"]
-        Conservatives = ["Slightly conservative",
-        "Conservative",
-        "Extremely conservative"]
-        Liberals = ["Extremely Liberal",
-        "Liberal", "Slightly Liberal"]
-        #count of partisans
-        Party_Count = []
-        #count of entries that are Dem but conservative or Repub but liberal
-        Outlier_box = []
-        #get Party_Count
-        for index, entry in sub.iterrows():
-                if entry["Party_Affiliation_(V201228)"] in Party_People:
-                        Party_Count.append(1)
-                else:
-                        Party_Count.append(0)
-        
-        for index, entry in sub.iterrows():
-                if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
-                        Outlier_box.append(1)
-                elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
-                        Outlier_box.append(1)
-                else:
-                        Outlier_box.append(0)
-        
-        sub["Party_Count"] = Party_Count
-        sub["Outliers"] = Outlier_box
-        return sub
-        
-Z = find_share(sub_polarization, "IL")                     
-
-IL_Group = Z.groupby("Party_Affiliation_(V201228)")[["Outliers", "Party_Count"]].sum().reset_index()
-
-IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count"])
-
-
-
-```
-
-
-Make bigger function to hold everything together
-```{python}
-
-def seek_polar(df, state):
-        mod_df = find_share(df, state)
-        mod_df = mod_df.groupby(
-            "Party_Affiliation_(V201228)"
-            )[["Outliers", "Party_Count"]].sum().reset_index()
-
-        mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
-        return mod_df
-
-#Example with IL
-seek_polar(sub_polarization, "IL")
-
-
-
-
 ```
 
 
@@ -585,7 +410,6 @@ version. www.electionstudies.org
     * As well as one `shiny` app with one dynamic plot
         * You can also add additional dynamic plots into your app to substitute for a static plot. So, a `shiny` app with 3 dynamic plots will count for full credit.
 
-# Basic plot to show Frequency of Volunteering Categories
 ```{python}
 filtered_data = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &
@@ -613,7 +437,6 @@ chart.show()
 chart.save('volunteer_frequency.png', format='png')
 ```
 
-# Plot to show Volunteering Frequency based on if one volunteered last year (2020)
 ```{python}
 volunteered_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
@@ -658,9 +481,7 @@ chart.show()
 chart.save('if_volunteered_last_year.png', format='png')
 ```
 
-# If they voted or not in the local election with no orange
 ```{python}
-#filtered if did vote
 volunteered_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
@@ -670,7 +491,6 @@ volunteered_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Voted_In_Local_Election'] == "Yes")
 ]
 
-# Filter data for those who did not vote
 did_not_volunteer_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
@@ -705,7 +525,6 @@ chart.show()
 chart.save('if_voted_in_local_election.png', format='png')
 ```
 
-# What is the correlation or relationship between volunteering frequency, news consumption and voting? 
 ```{python}
 volunteering_frequencies = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
@@ -758,13 +577,12 @@ chart.show()
 chart.save('news_consumption_volunteering_correlation.png', format='png')
 ```
 
-# If consumed news basically everyday, what is your voting frequency 
 ```{python}
 volunteering_frequencies = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
     (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &  
-    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &
     (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know")
 ]
 
@@ -807,7 +625,6 @@ import os
 from pathlib import Path
 ```
 
-# Does the consumption of news impact hours spent volunteering?
 ```{python}
 filtered_data = volunteering_frequencies[
     (volunteering_frequencies['Frequency_Of_News_Consumption'].notna()) & 
@@ -833,7 +650,8 @@ chart.show()
 chart.save('boxplot_news_consumption_vs_volunteering_hours.png', format='png')
 ```
 
-# preparing some data, to list the average number of hours volunteered by state
+The above was used as exploratory code to analyze the data, especially to see how variables like news consumption and volunteering frequency interacted with each other. Also, we wanted to see how the correlation lookked in comparison to each other, such as voting frequency with if one voted or if one boycotted. The below code uses the US State variable to figure out if there is a correlation between how many volunteers come from a given state and how many hours they volunteered. From what we saw, there did not seem to be a strong correlation between state and hours volunteered. The number of volunteers from a given state was more reflective of population size than any kknd of potential ideology.
+
 ```{python}
 filtered_data = volunteering_frequencies[
     (volunteering_frequencies['Hours_Spent_Volunteering'].notna()) & 
@@ -847,17 +665,14 @@ filtered_data = filtered_data[filtered_data['Hours_Spent_Volunteering'].notna()]
 average_hours_per_state = filtered_data.groupby('US State')['Hours_Spent_Volunteering'].mean().reset_index()
 
 average_hours_per_states = average_hours_per_state.sort_values(by='Hours_Spent_Volunteering', ascending=False)
-```
 
-# using the above data to show the top and bottom 5 states when it comes to average hours of volunteering
-```{python}
 top_bottom_states = pd.concat([average_hours_per_state.nlargest(5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])
 
 scatter_plot = alt.Chart(top_bottom_states).mark_point(size=100, color='blue').encode(
     x=alt.X('US State:N', title='US State', sort='-y'),  
     y=alt.Y('Hours_Spent_Volunteering:Q', title='Average Hours Spent Volunteering')  
 )
-chart = scatter_plot + top_bottom_labels
+chart = scatter_plot
 
 chart = chart.properties(
     title='Top 5 and Bottom 5 States by Average Hours Spent Volunteering',
@@ -872,7 +687,6 @@ chart.show()
 chart.save('top_bottom_5_states_avg_volunteering.png', format='png')
 ```
 
-# the following chart is total number of volunteers per state and stacked by volunteer frequency
 ```{python}
 filtered_data = volunteering_frequencies.dropna(subset=['US State'])
 
@@ -910,7 +724,8 @@ final_chart
 final_chart.save('number_volunteers_per_state.png', format='png')
 ```
 
-# chart depicted share of people who boycotted based on volunteering frequency
+
+
 ```{python}
 #create list for graph to sort on 
 sorting_list = [
