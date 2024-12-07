@@ -31,7 +31,7 @@ from us import states
 ```
 # Background
 
-This project began as a shared interest in trends behind volunteering rates in America, as two of our member (Justine and Charles) are AmeriCorps alumni.
+This project began as a shared interest in trends behind volunteering rates in America, as two of our members (Justine and Charles) are AmeriCorps alumni.
 
 For the past few years, concerns about the American public's increasing rates of isolation, decreasing lack of civic engagement and faith in institutions, and greater rates of political polarization have been prominent in the news and media. Our personal experiences with AmeriCorps and volunteering have taught us that volunteering can be effective at reducing isolation, increasing civic engagement/community awareness, and decreasing negative polarization towards "the other side". However, is volunteering a legitimate part of a public policy solution to these issues, or is it just a red herring?
 
@@ -63,9 +63,12 @@ cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/pr
 
 vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
 
-polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
+polarization = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/anes_timeseries_2020_csv_20220210.csv")
 
 ```
+
+# Data cleaning - CEV/VCL data 
+
 As there are over 400 variables in the CEV and VCL data, here are the most relevant variables we focused on:
 
 Frequency and Type of Volunteering:
@@ -258,7 +261,7 @@ cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Sta
 
 ```
 
-# Measuring Political Engagement
+# CEV/VCL Data - Measuring Political Engagement
 
 As part of our analysis, we gauged volunteerism by referring to the question “Did you volunteer in the last 12 months”? However, there isn’t a single “civic/political engagement” question in the CEV/VCL data, but rather several different questions that are related.
 We chose five of the most relevant questions and weighted each based on their level of effort:
@@ -275,6 +278,40 @@ This generated a score from 0 - 100 that we could use as a (imperfect) proxy for
 
 
 (Important caveat: For the political engagement questions, less than 20% of respondents answered three or more of the selected questions. To ensure meaningful data, we excluded all respondents who did not meet this threshold. While this approach improves the consistency of the dataset, we should be aware of potential selection bias.)
+
+# ANES data cleaning
+
+For the ANES data, we create
+
+```{python}
+#list 1
+subset_list_1 = [column for column in polarization if "V2010" in column]
+
+#list 2
+subset_list_2 = [column for column in polarization if "V2012" in column]
+
+#put the lists together
+#make a loop 
+
+#empty receiver
+subset_list = []
+
+#loop 1
+for value in subset_list_1:
+        subset_list.append(value)
+
+#loop 2
+for value in subset_list_2:
+        subset_list.append(value)                    
+
+#subset 
+sub_polarization = polarization.filter(items= subset_list)
+
+#add a column that just equals 1 to use for tracking the number
+#of entries
+sub_polarization["Observations"] = 1
+```
+
 
 
 ```{python}
@@ -333,38 +370,13 @@ print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
 
 ```
 
+# Data Cleaning - ANES Data
 
+As with the CEV/VCL data, our goal was to subset the data so that it only contains relevant variables. We accomplish this by making two lists:
 
+List 1: This list is designed to capture variables covering geographic information (V201011, V201013a, V201013b, V201014a, V201014b)
 
-# Important elements of the ANES Codebook
-
-1. Note on geography:
-
-"Some variables have been removed from the full release dataset in order to protect
- respondent confidentiality....
- Examples of restricted variables include, but are not limited to: detailed geography,
- detailed religious denomination..."
-
-2. Understanding the variables:
-" The Codebook includes the following information, where applicable, for each
- variable: the variable name (all variable names start with a “V”, and summary
- variables end with the suffix “x”), variable label (with “PRE:” indicating that it is from
- the pre-election study), question wording/variable meaning, response/code values
- and meanings, universe (where only a subset of respondents appear in a variable,
- which respondents those should be; note that universes are not included for most
- summary variables), associated survey question(s), information about whether
- randomization was used, interviewer instructions, and any other notes about the
- variable"
-
-
-Subset for the useful columns
-
-List 1: This list contains only pre-election data, it is designed to capture variables
-covering some geographic information (V201011, V201013a, V201013b, V201014a, V201014b)
-
-List 2: This list contains only pre-election data, it is designed to capture variables
-covering information about assessments of political positioning
-(i.e. left, right, center)
+List 2: This list is designed to capture variables covering information about assessments of political positioning (i.e. left, right, center)
 ```{python}
 #list 1
 subset_list_1 = [column for column in polarization if "V2010" in column]
@@ -394,7 +406,7 @@ sub_polarization = polarization.filter(items= subset_list)
 sub_polarization["Observations"] = 1
 ```
 
-# More Data Cleaning
+# ANES - More Data Cleaning
 
 Analyzing Question V201200, which is a question asking:
 
@@ -431,18 +443,10 @@ sub_polarization = sub_polarization.merge(crosswalk_polar, left_on = "V201200", 
 
 ```
 
-Make dataframe where all data is aggregated by state, and then
-we can show correlation between measure of polarity and 
-the share of respondents in a state who did volunteer work.
+We use this data to make a dataframe aggregated by state, and then we can show correlation between measure of polarity and the share of respondents in a state who did volunteer work.
 
-Clean data to produce some geographic information. Note that we previously used two ANES variables as US State variables, 
-with only
-"US State 2" being used in analysis, purely because it has more in-universe entries. This appears to 
-be partially due to respondent reactions to different questions, and partially due to information 
-restrictions on the dataset. As such, "US State", is only used 
-for CEV data. 
+ Note that we previously used two ANES variables as US State variables,  with only "US State 2" being used in analysis, purely because it has more in-universe entries. This appears to be partially due to respondent reactions to different questions, and partially due to information restrictions on the dataset. As such, "US State" is only used for CEV data. 
 
-V201013a
 ```{python}
 #Replace FIPS codes with states
 from us import states
@@ -484,50 +488,53 @@ sub_polarization = sub_polarization.merge(crosswalk_party_2, left_on = "V201228"
 
 ```
 
-# Measures of Polarization
+# 2. Exploratory Analysis
 
-We will use two measures of polarization; each provides some 
-amount of information that can be interpreted to 
-indicate polarization to a certain extent, though neither of which 
-are fully empirically sound. 
+# 2a. Measures of Polarization
 
-The first we will call Share of Outliers. 
+We will use two measures of polarization from the ANES data; each provides some amount of information that can be interpreted to indicate polarization to a certain extent, though both have their drawbacks.
 
-Following that, make function that subsets by state, and then groups
-by political party, and then returns the share of Democrats
-that are some kind of Conservative, and the share of Republicans that are some kind of Liberal.
+1. Share of Outliers - we create a series of functions that group respondents by party Democrats with conservative-leaning ideologies, and Republicans with liberal-leaning ones. 
+
 ```{python}
 def find_share(df, state):
-        #subset by state
-        sub = df[df["US State 2"] == state]
-        Party_People = ["Democrat", "Republican"]
-        Conservatives = ["Slightly conservative",
-        "Conservative",
-        "Extremely conservative"]
-        Liberals = ["Extremely Liberal",
-        "Liberal", "Slightly Liberal"]
-        #count of partisans
-        Party_Count = []
-        #count of entries that are Dem but conservative or Repub but liberal
-        Outlier_box = []
-        #get Party_Count
-        for index, entry in sub.iterrows():
-                if entry["Party_Affiliation_(V201228)"] in Party_People:
-                        Party_Count.append(1)
-                else:
-                        Party_Count.append(0)
-        
-        for index, entry in sub.iterrows():
-                if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
-                        Outlier_box.append(1)
-                elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
-                        Outlier_box.append(1)
-                else:
-                        Outlier_box.append(0)
-        
-        sub["Party_Count"] = Party_Count
-        sub["Outliers"] = Outlier_box
-        return sub
+    """
+    Processes a subset of survey data for a specific state to identify and count party-affiliated respondents and ideological outliers.
+
+    Returns a subset of the input DataFrame, including new columns for:
+        - 'Party_Count': Counts of individuals affiliated with major parties.
+        - 'Outliers': Counts of ideological outliers within each party.
+"""
+    #subset by state
+    sub = df[df["US State 2"] == state]
+    Party_People = ["Democrat", "Republican"]
+    Conservatives = ["Slightly conservative",
+    "Conservative",
+    "Extremely conservative"]
+    Liberals = ["Extremely Liberal",
+    "Liberal", "Slightly Liberal"]
+    #count of partisans
+    Party_Count = []
+    #count of entries that are Dem but conservative or Repub but liberal
+    Outlier_box = []
+    #get Party_Count
+    for index, entry in sub.iterrows():
+            if entry["Party_Affiliation_(V201228)"] in Party_People:
+                    Party_Count.append(1)
+            else:
+                    Party_Count.append(0)
+    
+    for index, entry in sub.iterrows():
+            if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                    Outlier_box.append(1)
+            elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                    Outlier_box.append(1)
+            else:
+                    Outlier_box.append(0)
+    
+    sub["Party_Count"] = Party_Count
+    sub["Outliers"] = Outlier_box
+    return sub
         
 Z = find_share(sub_polarization, "IL")                     
 
@@ -538,140 +545,125 @@ IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count
 
 ```
 
-
-Make bigger function to hold everything together
 ```{python}
 
 def seek_polar(df, state):
-        mod_df = find_share(df, state)
-        mod_df = mod_df.groupby(
-            "Party_Affiliation_(V201228)"
-            )[["Outliers", "Party_Count"]].sum().reset_index()
+    '''
+    Aggregates polarization data for a specific state, calculating the share of ideological outliers within party-affiliated populations.
 
-        mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
-        return mod_df
+    '''
+    mod_df = find_share(df, state)
+    mod_df = mod_df.groupby(
+        "Party_Affiliation_(V201228)"
+        )[["Outliers", "Party_Count"]].sum().reset_index()
+
+    mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+    return mod_df
 
 #Example with IL
 seek_polar(sub_polarization, "IL")
 
 
 
-
 ```
 
 
-Following that, make function that subsets by state, and then groups
-by political party, and then returns the share of Democrats
-that are some kind of Conservative, and the share of Republicans that are some kind of Liberal
 ```{python}
 
 
 def find_share_state(df, state):
-        #subset by state
-        sub = df[df["US State 2"] == state]
-        Party_People = ["Democrat", "Republican"]
-        Conservatives = ["Slightly Conservative",
-        "Conservative",
-        "Extremely Conservative"]
-        Liberals = ["Extremely Liberal",
-        "Liberal", "Slightly Liberal"]
-        #count of partisans
-        Party_Count = []
-        #count of entries that are Dem but conservative or Repub but liberal
-        Outlier_box = []
-        #get Party_Count
-        for index, entry in sub.iterrows():
-                if entry["Party_Affiliation_(V201228)"] in Party_People:
-                        Party_Count.append(1)
-                else:
-                        Party_Count.append(0)
-        
-        for index, entry in sub.iterrows():
-                if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
-                        Outlier_box.append(1)
-                elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
-                        Outlier_box.append(1)
-                else:
-                        Outlier_box.append(0)
-        
-        sub["Party_Count"] = Party_Count
-        sub["Outliers"] = Outlier_box
-        return sub
-        
-
-
+    '''
+    Generates a modified subset of survey data for a given state, identifying partisans and ideological outliers.
+'''
+    #subset by state
+    sub = df[df["US State 2"] == state]
+    Party_People = ["Democrat", "Republican"]
+    Conservatives = ["Slightly Conservative",
+    "Conservative",
+    "Extremely Conservative"]
+    Liberals = ["Extremely Liberal",
+    "Liberal", "Slightly Liberal"]
+    #count of partisans
+    Party_Count = []
+    #count of entries that are Dem but conservative or Repub but liberal
+    Outlier_box = []
+    #get Party_Count
+    for index, entry in sub.iterrows():
+            if entry["Party_Affiliation_(V201228)"] in Party_People:
+                    Party_Count.append(1)
+            else:
+                    Party_Count.append(0)
+    
+    for index, entry in sub.iterrows():
+            if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                    Outlier_box.append(1)
+            elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                    Outlier_box.append(1)
+            else:
+                    Outlier_box.append(0)
+    
+    sub["Party_Count"] = Party_Count
+    sub["Outliers"] = Outlier_box
+    return sub
+    
 
 
 ```
 
-Make bigger function to produce results by each state by subsetting for a given state
-```{python}
-
-def seek_polar(df, state):
-        mod_df = find_share_state(df, state)
-        mod_df = mod_df.groupby(
-            "Party_Affiliation_(V201228)"
-            )[["Outliers", "Party_Count"]].sum().reset_index()
-
-        mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
-        return mod_df
-
-#Example with IL
-seek_polar(sub_polarization, "IL")
-
-```
-
-Make a function returning the number of outliers in a given state's party population as a share of that state's party population and graph
-
-Produce modified "nation" version of find_share()
 ```{python}
 def find_share_nation(df):
-        Party_People = ["Democrat", "Republican"]
-        Conservatives = ["Slightly Conservative",
-        "Conservative",
-        "Extremely Conservative"]
-        Liberals = ["Extremely Liberal",
-        "Liberal", "Slightly Liberal"]
-        #count of partisans
-        Party_Count = []
-        #count of entries that are Dem but conservative or Repub but liberal
-        Outlier_box = []
-        #get Party_Count
-        for index, entry in df.iterrows():
-                if entry["Party_Affiliation_(V201228)"] in Party_People:
-                        Party_Count.append(1)
-                else:
-                        Party_Count.append(0)
-        #get outlier count
-        for index, entry in df.iterrows():
-                if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
-                        Outlier_box.append(1)
-                elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
-                        Outlier_box.append(1)
-                else:
-                        Outlier_box.append(0)
-        
-        df["Party_Count"] = Party_Count
-        df["Outliers"] = Outlier_box
-        return df
+    '''
+    Processes survey data at the national level to identify party-affiliated respondents and ideological outliers.
+'''
+    Party_People = ["Democrat", "Republican"]
+    Conservatives = ["Slightly Conservative",
+    "Conservative",
+    "Extremely Conservative"]
+    Liberals = ["Extremely Liberal",
+    "Liberal", "Slightly Liberal"]
+    #count of partisans
+    Party_Count = []
+    #count of entries that are Dem but conservative or Repub but liberal
+    Outlier_box = []
+    #get Party_Count
+    for index, entry in df.iterrows():
+            if entry["Party_Affiliation_(V201228)"] in Party_People:
+                    Party_Count.append(1)
+            else:
+                    Party_Count.append(0)
+    #get outlier count
+    for index, entry in df.iterrows():
+            if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                    Outlier_box.append(1)
+            elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                    Outlier_box.append(1)
+            else:
+                    Outlier_box.append(0)
+    
+    df["Party_Count"] = Party_Count
+    df["Outliers"] = Outlier_box
+    return df
 
 ```
 
 ```{python}
 def polar_table(df):
-        mod_df = find_share_nation(df)
-        #make a grouped df that takes sum of each states' outliers and 
-        #people who identify with a party
-        mod_df = mod_df.groupby("US State 2")[
-            ["Outliers", "Party_Count"]
-            ].sum().reset_index()
-        mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
-        return mod_df
+    '''
+    Generates a summary table of polarization data, grouping by state to calculate the share of ideological outliers.
+    '''
+    mod_df = find_share_nation(df)
+    #make a grouped df that takes sum of each states' outliers and 
+    #people who identify with a party
+    mod_df = mod_df.groupby("US State 2")[
+        ["Outliers", "Party_Count"]
+        ].sum().reset_index()
+    mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+    return mod_df
 
 
 ```
 
-Save to a dataframe
+
 ```{python}
 polar_by_party = polar_table(sub_polarization)
 
@@ -691,45 +683,27 @@ sum_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
 
 ```
 
-In a paper on quantifying polarization written by Aaron Bramson et al (
-    https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization
-indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion. 
-It's essentially the 
-gap between the most extreme political positions.
-In the paper, Bramson and colleagues explain:
-"Polarization in the sense of spread can be measured as the value of the agent with the highest belief value minus the value of the agent with the lowest belief value (sometimes called the ‘range’ of the data).""
+In a paper on quantifying polarization written by Aaron Bramson et al (https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion- essentially the gap between the most extreme political positions.
 
-We (imperfectly) approximate this using two more variables:
-V201206 and V201207. 
+In the paper, Bramson et al. explain: "Polarization in the sense of spread can be measured as the value of the agent with the highest belief value minus the value of the agent with the lowest belief value (sometimes called the ‘range’ of the data).""
 
-These ask respondents to position political parties on the political spectrum. We can select
-the most ideologically distant nodes on the personal ideology scale (extremely liberal and extremely conservative)
-and capture how far apart their conceptions of each party are, 
-on average, and then disaggregate by state.
+We (imperfectly) approximate this using two more variables: V201206 and V201207. These ask respondents to position political parties on the political spectrum. We can select the most ideologically distant nodes on the personal ideology scale (extremely liberal and extremely conservative) and capture how far apart their conceptions of each party are,  on average, and then disaggregate by state.
 
-We will assign the different ideological positions to 
-different points on a spectrum, namely:
-
+We will assign the different ideological positions to different points on a spectrum, namely:
 -3, -2, and -1 are "Extremely Liberal", 
 "Liberal",  and "Slightly Liberal"; 
 
 and:
 0 is "Moderate; middle of the road"; 
 
-finally 
+finally,
 1, 2, and 3 are "Slightly conservative",
 "Conservative" and "Extremely conservative.""
 
-We'll then compare average positions by state. 
-For example, if the average 
-extremely liberal respondent in Texas 
-places Democrats at at -1 (slightly liberal)
-and the average for the extremely conservative
-respondents in -3 (extremely liberal), then the 
-distance between the two is 4, meaning Texas would have a
-spread of 4 for this question.
+We'll then compare average positions by state. For example, if the average 
+extremely liberal respondent in Texas places Democrats at at -1 (slightly liberal) and the average for the extremely conservative respondents in -3 (extremely liberal), then the distance between the two is 4, meaning Texas would have a spread of 4 for this question.
 
-Crosswalk V201206 and V201207
+We create the crosswalks V201206 and V201207 -
 ```{python}
 crosswalk_V201206 = pd.DataFrame({
     #the dataset's scaled
@@ -774,8 +748,8 @@ sub_polarization = sub_polarization.merge(crosswalk_V201207, left_on = "V201207"
 sub_polarization = sub_polarization.drop(["Dem_Num_(V201206)", "Repub_Num_(V201207)"], axis = 1)
 ```
 
-Use the Positioning columns to compare the average party position 
-selections between the 2 extremes
+We use the Positioning columns to compare the average party position 
+selections between the 2 extremes. 
 
 Step 1: First grouping
 ```{python}
@@ -809,15 +783,17 @@ ex_polarization["Extreme_Position"] = Extreme_L_C
 position_groups = ex_polarization.groupby(["US State 2", "Extreme_Position"])[["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]].mean().reset_index()
 ```
 
-Attribution: Asked ChatGPT for help fixing my list comprehension
 
-Use position_groups to create a df that has 4 columns:
+Step 2: We use the variable position_groups to create a dataframe that has 4 columns:
 (1) The position Liberals give Democrats on the spectrum
 (2) the position Conservatives give Democrats on the spectrum
 (3) the position Liberals give Republicans on the spectrum
 (4) the position Conservatives give Republicans on the spectrum
 
 ```{python}
+#Attribution: Asked ChatGPT for help fixing my list comprehension. Also asked ChatGPT how to flatten a multi-index column, which recommended ##source: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
+
+
 #pivot on Extreme_Position
 pivot_position = position_groups.pivot(
     index = "US State 2", 
@@ -842,21 +818,21 @@ pivot_position = pivot_position.rename(
             "Repub_Positioning(V201207)_Liberal":"Repub_Position_L"
         }
     )
+
+
 ```
 
-https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
-Asked ChatGPT how to flatten a multi-index column
 
-Now, use those 4 columns to create the spread, meaning
-the absolute value of the difference betweeen:
+Step 3: Now, we use those 4 columns to create the spread, meaning the absolute value of the difference betweeen:
 
-(1) 
-The position Liberals give Democrats on the spectrum and the position Conservatives give Democrats on the spectrum
+(1) The position Liberals give Democrats on the spectrum and the position Conservatives give Democrats on the spectrum
 
-(2) 
-the position Liberals give Republicans on the spectrum and the position Conservatives give Republicans on the spectrum
+(2) The position Liberals give Republicans on the spectrum and the position Conservatives give Republicans on the spectrum
 
 ```{python}
+#Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
+#Asked ChatGPT how to flatten a multi-index column
+
 #capture spread variables
 pivot_position["Spread_Dem"] = abs(
     pivot_position["Dem_Position_C"] - 
@@ -870,14 +846,10 @@ pivot_position["Spread_Repub"] = abs(
 
 ```
 
-Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
-Asked ChatGPT how to flatten a multi-index column
 
-Now, graph those differences, we're going to interpret these 
-spreads as an indicator of polarization, acknowledging that 
-this is too simple an analysis to account for the full 
-complexity of this kind of measurement (limitations will 
-be discussed in write-up)
+Step 4: Now, we graph those differences and interpret these spreads as an indicator of polarization. We acknowledge that this is too simple an analysis to account for the full complexity of this kind of measurement, as polarization involves not just distance between extremes, but also clustering around them. We also acknowledge that our political scale assumes a linear ideological spectrum, which isn't always the case.
+
+
 ```{python}
 
 #Opinion on the position of the Democratic Party
@@ -896,13 +868,10 @@ Republican_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
     alt.Color("US State 2")
 ).properties(title = alt.TitleParams("Spread of Views on Republican Party Ideological Position"))
 
-
-
-
-
 ```
 
-Merge the two datasets together on "US State 2"
+Step 5: We merge the two datasets together on "US State 2". Note that this merged dataset could be misleading, because some of the merged variables only apply to the "extreme" respondents in each state, and so it's not representative of the entire state's respondents' positioning of different parties. We've dropped those variables from the merge to try to account for this.
+
 ```{python}
 merged_polarization = sub_polarization.merge(pivot_position, left_on = "US State 2", right_on = "US State 2", how = "outer")
 
@@ -915,14 +884,8 @@ merged_polarization = merged_polarization.drop([
 
 ```
 
-Note that this merged dataset could be misleading, because some of the
-merged variables only apply to the "extreme" respondents in each 
-state, and so it's not representative of the entire state's respondents' 
-positioning of different parties. So we've dropped those variables
-from the merge.
+Step 6: We merge the AmeriCorps CEV/VCL data with the spread data so far
 
-
-Now we'll merge the Americorps data with the spread data
 ```{python}
 #remove 'Not in Universe', 'No Answer', 'Refused'
 #from cev_all_2021_filter
@@ -947,9 +910,9 @@ main_group = group_cev.merge(
 
 ```
 
-Function for viewing Political Engagement alongside spread, one 
-generating a table with 2 states for comparison, and another 2 
+Step 7: We create a function for viewing Political Engagement alongside spread, one generating a table with 2 states for comparison, and another 2 
 returning graphs
+
 ```{python}
 #return table
 def engagement_spread_table(df, state_1, state_2):
@@ -993,7 +956,8 @@ def engagement_spread_graph_R(df, column):
 
 ```
 
-List of static polarization spread graphs
+Below is an example of using our function to generate a political engagement score for different states: 
+
 ```{python}
 #sample static table with 
 Sample_Table = engagement_spread_table(main_group, "IL", "OR")
@@ -1001,7 +965,7 @@ Sample_Table = engagement_spread_table(main_group, "IL", "OR")
 print(Sample_Table)
 ```
 
-Sample static graphs on Dem position
+And below are sample static graphs on Democratic and Republican positions:
 ```{python}
 #using average political engagement
 Dem_Graph_Spread_1 = engagement_spread_graph_D(main_group, "political_engagement_score")
@@ -1014,7 +978,7 @@ Dem_Graph_Spread_1.show()
 Dem_Graph_Spread_2.show()
 ```
 
-#sample static graphs on Repub position
+
 ```{python}
 #using average political engagement
 Repub_Graph_Spread_1 = engagement_spread_graph_R(main_group, "political_engagement_score")
@@ -1028,16 +992,8 @@ Repub_Graph_Spread_2.show()
 ```
 
 
-2. Plotting (25%)
-    * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
-    * As well as one `shiny` app with one dynamic plot
-        * You can also add additional dynamic plots into your app to substitute for a static plot. So, a `shiny` app with 3 dynamic plots will count for full credit.
+Below is a atatic graph of ideological position in the US nationally as of 2020:
 
-```{python}
-
-```
-
-Static graph of polarization nationally
 ```{python}
 alt.data_transformers.enable("vegafusion")
 #create list for graph to sort on 
@@ -1079,7 +1035,8 @@ Note: We removed non-responses, likely creating a bias in the relative
 size of the remaining groups (it's difficult to predict the direction
 of said bias, however.)
 
-Static graph of ideological position by state
+Additionally, below is a sample static graph of ideological position by state, using IL as an example:
+
 ```{python}
 
 def ideology_by_state(df, state):
@@ -1118,32 +1075,34 @@ def ideology_by_state(df, state):
 #Example for Illinois
 Ideological_Position_IL = ideology_by_state(sub_polarization, "IL")
 
+Ideological_Position_IL.show()
+
 ```
 
-Correlation between volunteer hours and political engagement
+Lastly, we will use the merged AmeriCorps and ANES data to plot a correlation between volunteer hours and political engagement:
+
 ```{python}
 
 Correlation_Graph = alt.Chart(main_group).mark_circle().encode(
-    alt.X("Hours_Spent_Volunteering", title = "Average Volunteer Hours"),
-    alt.Y("political_engagement_score", title = "Average Political Engagement Score").scale(
+    alt.X("Hours_Spent_Volunteering", title="Average Volunteer Hours"),
+    alt.Y("political_engagement_score", title="Average Political Engagement Score").scale(
         domain=(
             main_group["political_engagement_score"].min() - 3,
             main_group["political_engagement_score"].max() + 3
         )
-        ),
+    ),
     alt.Color("US State 2")
-).properties(title = alt.TitleParams(
+).properties(title=alt.TitleParams(
     "Correlation between volunteer hours and political engagement"
-    ))
+))
 
 Correlation_Graph.show()
 
-
-
-
 ```
 
-Note: We remove non-responses in the state graph.
+This shows a noted positive correlation between volunteer hours and political engagement. However, as we'll see, this doesn't necessarily imply that increasing volunteering will lead to higher civic engagement.
+
+
 
 4. Reproductibility (10%)
     * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see "Final Repository" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments
