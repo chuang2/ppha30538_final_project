@@ -14,7 +14,7 @@
         "  warning: false\n",
         "---"
       ],
-      "id": "da451d90"
+      "id": "c580f19e"
     },
     {
       "cell_type": "code",
@@ -33,7 +33,7 @@
         "# for spatial data\n",
         "from us import states  # Background"
       ],
-      "id": "028f9510",
+      "id": "5b851a1b",
       "execution_count": null,
       "outputs": []
     },
@@ -66,7 +66,7 @@
         "\n",
         "https://drive.google.com/drive/folders/1PUTN2pyh78MLoK0RVtGnf1ZwiM1BAAuV?usp=sharing\n"
       ],
-      "id": "793367a6"
+      "id": "e2fda14b"
     },
     {
       "cell_type": "code",
@@ -81,7 +81,7 @@
         "\n",
         "polarization = pd.read_csv(\"/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/anes_timeseries_2020_csv_20220210.csv\")"
       ],
-      "id": "62ed7c41",
+      "id": "0b544303",
       "execution_count": null,
       "outputs": []
     },
@@ -206,7 +206,7 @@
         "\n",
         "# 7. Coding Analysis (Not Shown in Writeup)\n"
       ],
-      "id": "063ea14f"
+      "id": "c0260d13"
     },
     {
       "cell_type": "code",
@@ -217,21 +217,18 @@
         "cev_2021_raw = cev_2021_raw.astype(str)\n",
         "vcl_supplement_raw = vcl_supplement_raw.astype(str)\n",
         "\n",
-        "# This finds all the variables in common between the two for a merge\n",
-        "common_keys = list(set(vcl_supplement_raw.columns).intersection(\n",
-        "    set(cev_2021_raw.columns)))\n",
+        "#This finds all the variables in common between the two for a merge\n",
+        "common_keys = list(set(vcl_supplement_raw.columns).intersection(set(cev_2021_raw.columns)))\n",
         "\n",
-        "\n",
-        "cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw,\n",
-        "                        on=common_keys, how=\"outer\")\n",
+        "cev_all_2021 = pd.merge(cev_2021_raw, vcl_supplement_raw, on=common_keys, how=\"outer\")\n",
         "\n",
         "cev_all_2021.head(5)\n",
         "\n",
-        "# Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique\n",
+        "#Note: Each row is a person- multiple people in the same household can have same household ID, so should not filter by unique\n",
         "\n",
         "# We can use a config.py file to keep this readable. Full details are in the config.py file"
       ],
-      "id": "2649a49e",
+      "id": "d99a64f9",
       "execution_count": null,
       "outputs": []
     },
@@ -256,7 +253,7 @@
         "#Debugging: removing duplicate column(s)\n",
         "cev_all_2021_filter = cev_all_2021_filter.loc[:, ~cev_all_2021_filter.columns.duplicated()]"
       ],
-      "id": "b1b4c6f9",
+      "id": "17041e54",
       "execution_count": null,
       "outputs": []
     },
@@ -266,15 +263,11 @@
       "source": [
         "# Attribution: Asked ChatGPT \"why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload\"\n",
         "# Import and reload config\n",
-        "from pathlib import Path\n",
-        "import os\n",
-        "from us import states\n",
-        "from config import add_engagement_score\n",
-        "from config import *\n",
         "import importlib\n",
         "import config\n",
         "importlib.reload(config)\n",
-        "\n",
+        "from config import *\n",
+        "import us as states\n",
         "\n",
         "# Replace FIPS codes with states\n",
         "\n",
@@ -365,7 +358,7 @@
         "cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(\n",
         "    gtmetsta_dict)"
       ],
-      "id": "6a66416d",
+      "id": "c80785bf",
       "execution_count": null,
       "outputs": []
     },
@@ -400,7 +393,7 @@
         "#of entries\n",
         "sub_polarization[\"Observations\"] = 1"
       ],
-      "id": "9d8e0117",
+      "id": "ce4d36a8",
       "execution_count": null,
       "outputs": []
     },
@@ -431,7 +424,7 @@
         "print(\"'engagement_level' exists:\",\n",
         "      'engagement_level' in cev_all_2021_filter.columns)"
       ],
-      "id": "ce1571ce",
+      "id": "901623d7",
       "execution_count": null,
       "outputs": []
     },
@@ -448,22 +441,13 @@
         "# Create directory if it doesn't exist\n",
         "shiny_data_path.mkdir(parents=True, exist_ok=True)\n",
         "\n",
-        "# Save with explicit column list to ensure all columns are included (debugging)\n",
-        "columns_to_save = cev_all_2021_filter.columns.tolist()\n",
+        "# Save dataset\n",
         "cev_all_2021_filter.to_csv(\n",
-        "    shiny_data_path / \"cev_2021_cleaned.csv\",\n",
-        "    columns=columns_to_save,\n",
-        "    index=False\n",
-        ")\n",
-        "\n",
-        "# Verify saved file - more debugging\n",
-        "verification_df = pd.read_csv(shiny_data_path / \"cev_2021_cleaned.csv\")\n",
-        "print(\"\\nColumns in saved CSV:\")\n",
-        "print(verification_df.columns.tolist())\n",
+        "    shiny_data_path / \"cev_2021_cleaned.csv\", index=False)\n",
         "\n",
         "print(f\"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}\")"
       ],
-      "id": "c6a96fc6",
+      "id": "82b5aea8",
       "execution_count": null,
       "outputs": []
     },
@@ -506,7 +490,7 @@
         "#of entries\n",
         "sub_polarization[\"Observations\"] = 1"
       ],
-      "id": "fb4357ad",
+      "id": "7bbed9b7",
       "execution_count": null,
       "outputs": []
     },
@@ -549,7 +533,7 @@
         "\n",
         "#We use this data to make a dataframe aggregated by state, and then we can show correlation between measure of polarity and the share of respondents in a state who did volunteer work."
       ],
-      "id": "e763f59e",
+      "id": "94b276f4",
       "execution_count": null,
       "outputs": []
     },
@@ -569,7 +553,7 @@
         "\n",
         "sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_state)\n"
       ],
-      "id": "bc7f06eb",
+      "id": "0142f246",
       "execution_count": null,
       "outputs": []
     },
@@ -604,7 +588,7 @@
         "sub_polarization = sub_polarization.merge(\n",
         "    crosswalk_party_2, left_on=\"V201228\", right_on=\"Party_Numbers_(V201228)\")\n"
       ],
-      "id": "56ee6fc8",
+      "id": "c9a401c5",
       "execution_count": null,
       "outputs": []
     },
@@ -616,7 +600,7 @@
         "\n",
         "1. Share of Outliers - we create a series of functions that group respondents by party Democrats with conservative-leaning ideologies, and Republicans with liberal-leaning ones. \n"
       ],
-      "id": "271b78a3"
+      "id": "681be7e4"
     },
     {
       "cell_type": "code",
@@ -667,7 +651,7 @@
         "\n",
         "IL_Group[\"Percent_Outliers\"] =  IL_Group[\"Outliers\"] / sum(IL_Group[\"Party_Count\"])\n"
       ],
-      "id": "fb453855",
+      "id": "e9b35965",
       "execution_count": null,
       "outputs": []
     },
@@ -691,7 +675,7 @@
         "#Example with IL\n",
         "seek_polar(sub_polarization, \"IL\")\n"
       ],
-      "id": "fb61101a",
+      "id": "b73ab3ba",
       "execution_count": null,
       "outputs": []
     },
@@ -734,7 +718,7 @@
         "    sub[\"Outliers\"] = Outlier_box\n",
         "    return sub\n"
       ],
-      "id": "b5068b95",
+      "id": "41c0c5e1",
       "execution_count": null,
       "outputs": []
     },
@@ -775,7 +759,7 @@
         "    df[\"Outliers\"] = Outlier_box\n",
         "    return df"
       ],
-      "id": "1460509c",
+      "id": "29bde577",
       "execution_count": null,
       "outputs": []
     },
@@ -796,7 +780,7 @@
         "    mod_df[\"Percent_Outliers\"] =  mod_df[\"Outliers\"] / sum(mod_df[\"Party_Count\"])\n",
         "    return mod_df\n"
       ],
-      "id": "79232d87",
+      "id": "e5f58130",
       "execution_count": null,
       "outputs": []
     },
@@ -820,7 +804,7 @@
         "    alt.Color(\"US State 2\")\n",
         ")"
       ],
-      "id": "551c79eb",
+      "id": "33462151",
       "execution_count": null,
       "outputs": []
     },
@@ -891,7 +875,7 @@
         "#drop Dem_Num and Repub_Num for clarity (we'll be using the reassigned numbers)\n",
         "sub_polarization = sub_polarization.drop([\"Dem_Num_(V201206)\", \"Repub_Num_(V201207)\"], axis = 1)"
       ],
-      "id": "59f01ca8",
+      "id": "f38a02b6",
       "execution_count": null,
       "outputs": []
     },
@@ -931,7 +915,7 @@
         "#groupby Extreme_Position and US State 2 and get average Dem and Repub positioning. Then save this to a df called position_groups\n",
         "position_groups = ex_polarization.groupby([\"US State 2\", \"Extreme_Position\"])[[\"Dem_Positioning(V201206)\", \"Repub_Positioning(V201207)\"]].mean().reset_index()"
       ],
-      "id": "d17496f8",
+      "id": "c7d12b70",
       "execution_count": null,
       "outputs": []
     },
@@ -975,7 +959,7 @@
         "        }\n",
         "    )\n"
       ],
-      "id": "773d264e",
+      "id": "51303896",
       "execution_count": null,
       "outputs": []
     },
@@ -1004,7 +988,7 @@
         "    pivot_position[\"Repub_Position_L\"]\n",
         "    )"
       ],
-      "id": "f31cb6dd",
+      "id": "b8dc184d",
       "execution_count": null,
       "outputs": []
     },
@@ -1034,7 +1018,7 @@
         "    alt.Color(\"US State 2\")\n",
         ").properties(title = alt.TitleParams(\"Spread of Views on Republican Party Ideological Position\"))"
       ],
-      "id": "68afb0a7",
+      "id": "31875f05",
       "execution_count": null,
       "outputs": []
     },
@@ -1054,7 +1038,7 @@
         "    axis = 1\n",
         "    )"
       ],
-      "id": "ad634520",
+      "id": "921b1302",
       "execution_count": null,
       "outputs": []
     },
@@ -1085,7 +1069,7 @@
         "    pivot_position, left_on = \"US State\", right_on = \"US State 2\"\n",
         ")"
       ],
-      "id": "590de8ca",
+      "id": "ab4d48d2",
       "execution_count": null,
       "outputs": []
     },
@@ -1138,7 +1122,7 @@
         "            )\n",
         "        return graph"
       ],
-      "id": "6a78d09a",
+      "id": "ebda8e92",
       "execution_count": null,
       "outputs": []
     },
@@ -1153,7 +1137,7 @@
         "\n",
         "print(Sample_Table)"
       ],
-      "id": "304a91f5",
+      "id": "0e82c85a",
       "execution_count": null,
       "outputs": []
     },
@@ -1175,7 +1159,7 @@
         "Dem_Graph_Spread_2.show()\n",
         "Dem_Graph_Spread_2.save('dem_graph_spread_2.png', format='png')"
       ],
-      "id": "a50549bb",
+      "id": "e568ac7a",
       "execution_count": null,
       "outputs": []
     },
@@ -1196,7 +1180,7 @@
         "Repub_Graph_Spread_2.show()\n",
         "Repub_Graph_Spread_2.save('repub_graph_spread_2.png', format='png')"
       ],
-      "id": "c7161f75",
+      "id": "9b799dd1",
       "execution_count": null,
       "outputs": []
     },
@@ -1206,7 +1190,7 @@
       "source": [
         "Below is a atatic graph of ideological position in the US nationally as of 2020:\n"
       ],
-      "id": "97bce84d"
+      "id": "3b00f07e"
     },
     {
       "cell_type": "code",
@@ -1249,7 +1233,7 @@
         "\n",
         "#Note: We removed non-responses, likely creating a bias in the relative size of the remaining groups (it's difficult to predict the direction of said bias, however.)"
       ],
-      "id": "e035cde3",
+      "id": "47ab96b9",
       "execution_count": null,
       "outputs": []
     },
@@ -1297,7 +1281,7 @@
         "\n",
         "Ideological_Position_IL.show()"
       ],
-      "id": "70492757",
+      "id": "04b53182",
       "execution_count": null,
       "outputs": []
     },
@@ -1322,7 +1306,7 @@
         "\n",
         "Correlation_Graph.show()"
       ],
-      "id": "b634445a",
+      "id": "4084ae3b",
       "execution_count": null,
       "outputs": []
     },
@@ -1359,7 +1343,7 @@
         "chart.show()\n",
         "chart.save('volunteer_frequency.png', format='png')"
       ],
-      "id": "6139e9fd",
+      "id": "cb6a35d7",
       "execution_count": null,
       "outputs": []
     },
@@ -1411,7 +1395,7 @@
         "chart.show()\n",
         "chart.save('if_volunteered_last_year.png', format='png')"
       ],
-      "id": "1dcecf13",
+      "id": "5eb0da9a",
       "execution_count": null,
       "outputs": []
     },
@@ -1466,7 +1450,7 @@
         "chart.show()\n",
         "chart.save('if_voted_in_local_election.png', format='png')"
       ],
-      "id": "e3b2d122",
+      "id": "877e1b85",
       "execution_count": null,
       "outputs": []
     },
@@ -1527,7 +1511,7 @@
         "chart.show()\n",
         "chart.save('news_consumption_volunteering_correlation.png', format='png')"
       ],
-      "id": "c906cf71",
+      "id": "3d005441",
       "execution_count": null,
       "outputs": []
     },
@@ -1573,7 +1557,7 @@
         "chart.show()\n",
         "chart.save('volunteering_vs_voting_news_daily.png', format='png')"
       ],
-      "id": "165a9898",
+      "id": "d48f69c8",
       "execution_count": null,
       "outputs": []
     },
@@ -1606,7 +1590,7 @@
         "chart.show()\n",
         "chart.save('boxplot_news_consumption_vs_volunteering_hours.png', format='png')"
       ],
-      "id": "3d0ded42",
+      "id": "34d0b7a3",
       "execution_count": null,
       "outputs": []
     },
@@ -1629,7 +1613,7 @@
         "\n",
         "average_hours_per_states = average_hours_per_state.sort_values(by='Hours_Spent_Volunteering', ascending=False)"
       ],
-      "id": "1adc67d9",
+      "id": "f1a61945",
       "execution_count": null,
       "outputs": []
     },
@@ -1639,27 +1623,41 @@
       "source": [
         "# using the above data to show the top and bottom 5 states when it comes to average hours of volunteering\n",
         "\n",
-        "top_bottom_states = pd.concat([average_hours_per_state.nlargest(5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])\n",
+        "top_bottom_states = pd.concat([average_hours_per_state.nlargest(\n",
+        "    5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])\n",
+        "\n",
+        "top_bottom_labels = alt.Chart(top_bottom_states).mark_text(\n",
+        "    align='left',  # Align text to the left of the point\n",
+        "    baseline='middle',\n",
+        "    dx=10  # Offset text slightly from the points\n",
+        ").encode(\n",
+        "    x=alt.X('US State:N', title='US State', sort='-y'),\n",
+        "    y=alt.Y('Hours_Spent_Volunteering:Q',\n",
+        "            title='Average Hours Spent Volunteering'),\n",
+        "    # Add text from the Hours_Spent_Volunteering column\n",
+        "    text=alt.Text('Hours_Spent_Volunteering:Q')\n",
+        ")\n",
         "\n",
         "scatter_plot = alt.Chart(top_bottom_states).mark_point(size=100, color='blue').encode(\n",
-        "    x=alt.X('US State:N', title='US State', sort='-y'),  \n",
-        "    y=alt.Y('Hours_Spent_Volunteering:Q', title='Average Hours Spent Volunteering')  \n",
+        "    x=alt.X('US State:N', title='US State', sort='-y'),\n",
+        "    y=alt.Y('Hours_Spent_Volunteering:Q',\n",
+        "            title='Average Hours Spent Volunteering')\n",
         ")\n",
         "chart = scatter_plot + top_bottom_labels\n",
         "\n",
         "chart = chart.properties(\n",
         "    title='Top 5 and Bottom 5 States by Average Hours Spent Volunteering',\n",
-        "    width=400,   \n",
-        "    height=00   \n",
+        "    width=400,\n",
+        "    height=00\n",
         ").configure_axisY(\n",
-        "    labelAngle=0  \n",
+        "    labelAngle=0\n",
         ").configure_axisX(\n",
-        "    labelAngle=45  \n",
+        "    labelAngle=45\n",
         ")\n",
         "chart.show()\n",
         "chart.save('top_bottom_5_states_avg_volunteering.png', format='png')"
       ],
-      "id": "53a5c65e",
+      "id": "e3d129b3",
       "execution_count": null,
       "outputs": []
     },
@@ -1700,7 +1698,7 @@
         "final_chart = chart + text\n",
         "final_chart"
       ],
-      "id": "2e813037",
+      "id": "a84f8066",
       "execution_count": null,
       "outputs": []
     },
@@ -1710,22 +1708,15 @@
       "source": [
         "final_chart.save('number_volunteers_per_state.png', format='png')"
       ],
-      "id": "5b72e738",
+      "id": "0d251d87",
       "execution_count": null,
       "outputs": []
-    },
-    {
-      "cell_type": "markdown",
-      "metadata": {},
-      "source": [
-        "# chart depicted share of people who boycotted based on volunteering frequency"
-      ],
-      "id": "915e36ac"
     },
     {
       "cell_type": "code",
       "metadata": {},
       "source": [
+        "# chart depicted share of people who boycotted based on volunteering frequency\n",
         "#boycott chart\n",
         "#filtered if did vote\n",
         "volunteered_last_year = cev_all_2021_filter[\n",
@@ -1773,7 +1764,7 @@
         "chart.show()\n",
         "chart.save('boycotted.png', format='png')"
       ],
-      "id": "8c4ccb00",
+      "id": "d721c99e",
       "execution_count": null,
       "outputs": []
     },
@@ -1783,7 +1774,7 @@
       "source": [
         "# same as above except now if person contacted public official"
       ],
-      "id": "e58980a4"
+      "id": "21a70b2e"
     },
     {
       "cell_type": "code",
@@ -1832,66 +1823,9 @@
         "chart.show()\n",
         "chart.save('contacted.png', format='png')"
       ],
-      "id": "590a3174",
+      "id": "77bfd7f2",
       "execution_count": null,
       "outputs": []
-    },
-    {
-      "cell_type": "markdown",
-      "metadata": {},
-      "source": [
-        "This shows a noted positive correlation between volunteer hours and political engagement. However, as we'll see, this doesn't necessarily imply that increasing volunteering will lead to higher civic engagement.\n",
-        "\n",
-        "4. Reproductibility (10%)\n",
-        "    * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see \"Final Repository\" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments\n",
-        "5. Git (10%)\n",
-        "    * You should submit your project as a Git repository.\n",
-        "    * Create multiple branches as you work for different pieces of the analysis. Branches may correspond to work done by different partners or to different features if you are working alone.\n",
-        "    * Your final repository should have one branch: `main`\n",
-        "    * We reserve the right to check the git commit history to ensure that all members have contributed to the project.\n",
-        "6. Extra credit: text processing (up to 10%)\n",
-        "    * Introduce some form of text analysis using natural language processing methods discussed in class.\n",
-        "\n",
-        "## Writeup (15%)\n",
-        "* You will then spend *no more than 3 pages* writing up your project. \n",
-        "* The primary purpose of this writeup is to inform us of what we are reading before we look at your code.\n",
-        "* You should describe your research question, then discuss the approach you took and the coding involved, including discussing any weaknesses or difficulties encountered. \n",
-        "* Display your static plots, and briefly describe them and your Shiny app. Discuss the policy implications of your findings.\n",
-        "* Finish with a discussion of directions for future work. \n",
-        "* The top of your writeup should include the names of all group members, their respective sections, and Github user names.\n",
-        "\n",
-        "## Presentation (15%)\n",
-        "* On the day of the presentation, one of the group members will be *randomly selected* to give a *8-minute in-class presentation*. All group members must be present.\n",
-        "* Any group member who is not present will receive an automatic 0 for the presentation portion of the final project.\n",
-        "* The presentation will be of slides that largely mirror the structure of the writeup, but will be more focused on discussing the research question and results as opposed to explaining the details of the coding. \n",
-        "\n",
-        "# Final Repository\n",
-        "Your final repository must contain the following:\n",
-        "\n",
-        "* Documentation and Meta-data\n",
-        "    * A `requirements.txt` file \n",
-        "    * A `.gitignore` file that ignores unneeded files (e.g. `venv`) \n",
-        "* Writeup: a user should be able to knit your `.qmd` file and re-generate the HTML version of your writeup\n",
-        "    * The `.qmd` file associated with your write-up\n",
-        "    * An HTML and PDF'd version of your writeup\n",
-        "    * A folder named `pictures` that contains the files for any pictures required to knit your writeup\n",
-        "* Data\n",
-        "    * A folder named `data` that contains the initial, unmodified dataframes you download and the final versions of the dataframe(s) you built.\n",
-        "    * If the dataset is greater than 100MB, it can hosted on Drive or Dropbox and the link should be provided in your .`qmd` file as a comment\n",
-        "* Shiny app\n",
-        "    * A folder named `shiny-app` that contains the code and any additional files needed to deploy your app\n",
-        "    * A user should be able to deploy your app directly from the command line within this folder\n",
-        "\n",
-        "\n",
-        "# Key Dates\n",
-        "* By November 1\n",
-        "    * Proposal submitted to Canvas quiz\n",
-        "    * (Optional) meeting with Professor Ganong, Professor Shi, or Head TA Ozzy Houck\n",
-        "    * Sign up for presentation slot\n",
-        "* December 2- December 5: in-class presentations\n",
-        "* December 7, 5PM: final repository submitted via Gradescope"
-      ],
-      "id": "09eb78f3"
     }
   ],
   "metadata": {
