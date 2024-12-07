@@ -13,3 +13,4 @@ textblob==0.17.1
 scipy==1.11.3
 requests==2.31.0
 python-dotenv==1.0.0
+vl-convert-python==1.7.0
