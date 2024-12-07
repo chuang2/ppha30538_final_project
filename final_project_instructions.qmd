@@ -674,7 +674,7 @@ scatter_plot = alt.Chart(top_bottom_states).mark_point(size=100, color='blue').e
     x=alt.X('US State:N', title='US State', sort='-y'),  
     y=alt.Y('Hours_Spent_Volunteering:Q', title='Average Hours Spent Volunteering')  
 )
-chart = scatter_plot + top_bottom_labels
+chart = scatter_plot
 
 chart = chart.properties(
     title='Top 5 and Bottom 5 States by Average Hours Spent Volunteering',
@@ -727,7 +727,7 @@ final_chart
 final_chart.save('number_volunteers_per_state.png', format='png')
 ```
 
-# chart depicted share of people who boycotted based on volunteering frequency
+ More exploratory data: 
 ```{python}
 #boycott chart
 #filtered if did vote
@@ -777,7 +777,6 @@ chart.show()
 chart.save('boycotted.png', format='png')
 ```
 
-# same as above except now if person contacted public official
 ```{python}
 volunteered_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
