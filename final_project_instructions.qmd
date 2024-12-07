@@ -1460,22 +1460,37 @@ average_hours_per_states = average_hours_per_state.sort_values(by='Hours_Spent_V
 ```{python}
 # using the above data to show the top and bottom 5 states when it comes to average hours of volunteering
 
-top_bottom_states = pd.concat([average_hours_per_state.nlargest(5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])
+top_bottom_states = pd.concat([average_hours_per_state.nlargest(
+    5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])
+
+top_bottom_labels = alt.Chart(top_bottom_states).mark_text(
+    align='left',  # Align text to the left of the point
+    baseline='middle',
+    dx=10  # Offset text slightly from the points
+).encode(
+    x=alt.X('US State:N', title='US State', sort='-y'),
+    y=alt.Y('Hours_Spent_Volunteering:Q',
+            title='Average Hours Spent Volunteering'),
+    # Add text from the Hours_Spent_Volunteering column
+    text=alt.Text('Hours_Spent_Volunteering:Q')
+)
+
 
 scatter_plot = alt.Chart(top_bottom_states).mark_point(size=100, color='blue').encode(
-    x=alt.X('US State:N', title='US State', sort='-y'),  
-    y=alt.Y('Hours_Spent_Volunteering:Q', title='Average Hours Spent Volunteering')  
+    x=alt.X('US State:N', title='US State', sort='-y'),
+    y=alt.Y('Hours_Spent_Volunteering:Q',
+            title='Average Hours Spent Volunteering')
 )
 chart = scatter_plot + top_bottom_labels
 
 chart = chart.properties(
     title='Top 5 and Bottom 5 States by Average Hours Spent Volunteering',
-    width=400,   
-    height=00   
+    width=400,
+    height=00
 ).configure_axisY(
-    labelAngle=0  
+    labelAngle=0
 ).configure_axisX(
-    labelAngle=45  
+    labelAngle=45
 )
 chart.show()
 chart.save('top_bottom_5_states_avg_volunteering.png', format='png')
