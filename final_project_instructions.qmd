@@ -1180,7 +1180,7 @@ Correlation_Graph.show()
 
 ```{python}
 
-#Below is the exploratory data analysis (h/t Justine)
+# Below is the exploratory data analysis (h/t Justine)
 
 # Basic plot to show Frequency of Volunteering Categories
 
@@ -1189,17 +1189,21 @@ filtered_data = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &
     (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &
     (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &
-    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know")  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know")
 ]
 
-frequency_counts = filtered_data['Volunteering_Frequency'].value_counts().reset_index()
+frequency_counts = filtered_data['Volunteering_Frequency'].value_counts(
+).reset_index()
+frequency_counts = pd.DataFrame(frequency_counts)
+
 frequency_counts.columns = ['Volunteering_Frequency', 'Frequency']
 
 chart = alt.Chart(frequency_counts).mark_bar().encode(
-    y=alt.Y('Volunteering_Frequency:O', title='Frequency Count'),  
-    x=alt.X('Frequency:Q', title='Frequency Count'),  
-    color=alt.Color('Frequency:Q', scale=alt.Scale(scheme='blues'), title='Volunteering Frequency'),  
-    tooltip=['Volunteering_Frequency', 'Frequency']  
+    y=alt.Y('Volunteering_Frequency:O', title='Frequency Count'),
+    x=alt.X('Frequency:Q', title='Frequency Count'),
+    color=alt.Color('Frequency:Q', scale=alt.Scale(
+        scheme='blues'), title='Volunteering Frequency'),
+    tooltip=['Volunteering_Frequency', 'Frequency']
 ).properties(
     title='Frequency of Volunteering Categories (Excluding "No Answer")',
     width=550,
