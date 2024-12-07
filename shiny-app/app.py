@@ -10,7 +10,7 @@ from pathlib import Path
 data_path = Path("data/cev_2021_cleaned.csv")
 cev_all_2021_filter = pd.read_csv(data_path, low_memory=False)
 
-### Base definitions/functions used for all apps below##
+### Base definitions/functions used for all apps below ##
 
 exclude_categories = ['No Answer', 'Refused', 'Do Not Know', 'Not in Universe']
 

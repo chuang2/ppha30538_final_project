@@ -1,103 +1,186 @@
 ---
-title: "30538 Final Project: Reproducible Research"
-author: "Peter Ganong and Maggie Shi" 
-date: "today"
+title: "30538 Final Project: Reproducible Research - Volunteerism, Engagement, and Polarization in the U.S."
+author: "Andrew White, Charles Huang, Justine Silverstein" 
+date: "December 7, 2024"
 format: pdf
 execute:
-  eval: false
   echo: false
+  warning: false
 ---
 
-# Project Description and Instructions
-The goal of this project is to showcase your knowledge of Python by applying it to a research project about a policy topic you are interested in. You will be graded on coding, writeup, and an in-class presentation.
-
-You may work on this project alone, or in groups of up to three students. All groups must be formed declared in the Canvas proposal before any work is done - it is not possible to join one after. 
-
-It is required that you use GitHub, and we may use your past commits to understand your thought process for partial credit. If you working in a group, note that as we are grading we will be looking for multiple commits per individual throughout the project. The division of labor should be approximately evenly across both individuals. While we will lean toward giving the same grade for all group members, it is possible that individuals may receive different grades based on the commit history.
-
-If you choose to form a group, we recommend that you do so with other students in your section. You are allowed to have a group member from another section, but all group members must be available to attend all the group members' lecture sessions. If you are not present when your project is presented, you will not receive credit for the presentation.
-
-
-# Grading 
-## Coding (70%)
-The code for the project should have the following components:
-
-1. Data wrangling (25%)
-    * You must use a minimum of *two* datasets. 
-    * All processing of the data should be handled by your `.qmd` code, including all merging and reshaping. 
 
 ```{python}
 # General
 import pandas as pd
 import numpy as np
 
-# Visualization 
+# Visualization
 import altair as alt
-
-# Geospatial data handling
-import geopandas as gpd
 
 # shiny framework
 from shiny import App, ui, render
+
+# for spatial data
+from us import states  # Background
 ```
+
+# 1. Background
+
+This project began as a shared interest in trends behind volunteering rates in America, as two of our members (Justine and Charles) are AmeriCorps alumni.
+
+For the past few years, concerns about the American public's increasing rates of isolation, decreasing lack of civic engagement and faith in institutions, and greater rates of political polarization have been prominent in the news and media. Our personal experiences with AmeriCorps and volunteering have taught us that volunteering can be effective at reducing isolation, increasing civic engagement/community awareness, and decreasing negative polarization towards "the other side". However, is volunteering a legitimate part of a public policy solution to these issues, or is it just a red herring?
+
+Our research questions were: 
+1. What is the current state of volunteerism, political engagement and polarization in America? 
+2. What factors make people more likely to volunteer or be civically engaged?
+
+
+# 2. Data Importing/Cleaning
+
+Our datasets for this project were:
+
+1. AmeriCorps CEV (Civic Engagement and Volunteering Supplement) for 2021
+2. U.S. Census Bureau Volunteering and Civic Life (VCL) Supplement - September 2021
+3. ANES (American National Election Studies) Time Series Data, 2020
+
+#1 and #2 primarily contain respondent information about volunteering and measures of civic engagement, while #3 contains information on political affiliation and polarization.
+
+We are importing the data from the AmeriCorps and ANES websites. Because the datasets are over 100 MB, we include a Google Drive link here:
+
+https://drive.google.com/drive/folders/1PUTN2pyh78MLoK0RVtGnf1ZwiM1BAAuV?usp=sharing
 
 ```{python}
-#Importing the data - AmeriCorps 2021 CEV 
-#Source: https://data.americorps.gov/dataset/2021-CEV-Data-Current-Population-Survey-Civic-Enga/rgh8-g2uc/about_data
-#Will need to include google drive/dropbox link since > 300MB
 
-#cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
+#Google Drive link for data: https://drive.google.com/drive/folders/1PUTN2pyh78MLoK0RVtGnf1ZwiM1BAAuV?usp=sharing
 
-#vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
 
-cev_2021_raw = pd.read_csv("/Users/justinesilverstein/Desktop/ppha30538_final_project/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241201.csv", encoding = 'utf-8')
+cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
 
-vcl_supplement_raw = pd.read_csv("/Users/justinesilverstein/Desktop/ppha30538_final_project/sep21pub.csv")
+vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+
+polarization = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/anes_timeseries_2020_csv_20220210.csv")
+
 ```
 
-Most relevant variables to focus on:
+As there are over 400 variables in the CEV and VCL data, we focused on the 20 most relevant variables in the following categories:
 
-Frequency and Type of Volunteering:
-PES16: Did the respondent spend any time volunteering for any organization in the past 12 months?
-PES16D: Frequency of volunteering (e.g., basically every day, a few times a week).
-PTS16E: Approximate hours spent volunteering.
-Political Engagement:
-PES2: How often the respondent discussed political, societal, or local issues with friends or family.
-PES5: How often these discussions occurred with neighbors.
-PES13: Contact or visits to a public official to express opinions.
-PES14: Boycotting or buying products based on political values or business practices.
-Civic Participation and Group Membership:
-PES15: Belonging to groups, organizations, or associations in the past 12 months.
-Neighbor and Community Interaction:
-PES7: Participation in activities to improve their neighborhood or community.
-Voting Behavior:
-PES11: Whether the respondent voted in the last local elections.
-Social Media and News Consumption:
-PES9: Posting views about political, societal, or local issues on the internet or social media.
-PES10: Frequency of consuming news related to political or societal issues.
+1. Frequency and Type of Volunteering
+2. Political Engagement (did respondents discuss politics, did they write to elected officials, boycott products, etc.)
+3. Civic/Community Participation (did respondents belong to groups/associations, interact with neighbors, etc.)
+4. Basic demographics (age, gender, race, income, education, etc.)
 
-Basic Demographics
-Age: PRTAGE (Person's age)
-Gender: PESEX (Sex of the respondent)
-Race/Ethnicity: PTDTRACE (Detailed race and Hispanic origin)
-Marital Status: PEMARITL (Marital status of the respondent)
-Household Composition: HRNUMHOU (Number of persons in the household)
+Because the CEV and VCL data use similar variable names (by design), we were able to merge the two datasets together after cleaning the column names. Since the data values in the CEV/VCL data are entered in numeric codes (-1, 1, 2, etc.), we also created mapping functions with dictionaries to convert the data as needed.
 
-Potential Confounding Variables
-Income: HEFAMINC (Household family income level)
-Education: PEEDUCA (Highest level of school completed)
-Urban/Rural Status: GTMETSTA (Metropolitan or non-metropolitan status)
-Community Involvement: PES7 (Participation in neighborhood or community activities)
-Social Media Use: PES9 (Posting views about political, societal, or local issues on the internet or social media)
+(One notable issue we encountered with cleaning the CEV/VCL data was a hetereogeneous mix of numeric code and qualitative input. We made an additional helper function that identifies all the values in the data that aren't picked up by our data dictionaries- this function is located in our config.py file.)
 
-This code will filter out the 400+ variables in the dataset to only the relevant ones.
+# 2b. Data cleaning - ANES data
 
-First we need to merge the two datasets:
+As with the CEV/VCL data, our goal was to subset the data so that it only contains relevant variables. We accomplished this by making two lists- one designed to capture variables covering geographic information (V201011, V201013a, V201013b, V201014a, V201014b), and one designed to capture variables covering information about assessments of political positioning (i.e. left, right, center)
+
+Similarly, we also used a mapping function to change numerical codes to qualitative data in two relevant questions: 
+
+V201200 - "Where would you place yourself on this [extremely liberal to extremely conservative] scale, or haven’t you thought much about this?"
+
+V201228 - "Generally speaking, do you usually think of yourself as [a Democrat, a Republican / a Republican, a Democrat], an independent, or something else?"
+
+# 3. Custom Variables
+
+We devised two custom measures of political engagement and polarization derived from the survey results:
+
+I. Political Engagement Score 
+
+We chose five of the most relevant questions from the CEV/VCL data and weighted each based on their level of effort:
+
+1. “How frequently do you talk to a family member/neighbor about politics?” (15%)
+2. “How frequently do you post political views on social media?” (15%)
+3. “How frequently do you consume political news/media?” (10%)
+4. “Did you contact an elected official to express your opinion in the last 12 months?” (30%) 
+5. “Did you boycott a company based on their values in the last 12 months?” (30%)
+
+This generated a score from 0 - 100 that we could use as a (imperfect) proxy for political engagement. We mutated a new variable to measure this and added it to our dataset.
+
+II. Polarization Score
+
+In a paper on quantifying polarization written by Aaron Bramson et al (https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion. Bramson et al. explain: "Polarization...can be measured as the value of the agent with the highest belief value minus the value of the agent with the lowest belief value."
+
+We (imperfectly) approximate this using two more variables: V201206 and V201207. These ask respondents to position political parties on the political spectrum. We selected the most ideologically distant nodes on the personal ideology scale (extremely liberal and extremely conservative) and capture how far apart their conceptions of each party are, on average.
+
+We created a scale to assign the different ideological positions on a spectrum, namely:
+-3, -2, and -1 are "Extremely Liberal", "Liberal",  and "Slightly Liberal"; 
+0 is "Moderate; middle of the road"; 
+1, 2, and 3 are "Slightly conservative", "Conservative", and "Extremely conservative."
+
+For example, if the average extremely liberal respondent in Texas places Democrats at -1 (slightly liberal) and the average for the extremely conservative respondents is 3 (extremely conservative), then the distance between the two is 4, meaning Texas would have a spread of 4 for this question.
+
+
+# 4. Static Plots and Outcomes
+
+# Caveats
+
+Before discussing the data, we acknowledge we cannot discuss patterns over time as we only have data from 2021 in the case of the AmeriCorps and U.S. Census data, and 2020 in the case of the ANES data. However, the data is still useful as we can garner a lot from even a snapshot in time, especially as this was right after the height of the COVID pandemic and a highly contentious election. Furthermore (as noted in the shiny app), many entries were missing from the datasets due to nonresponse. As an example, over 80% respondents did not answer a majority of our political engagement questions, forcing us to exclude them from the analysis. While we believe our analyses still provide useful information, this potential selection bias should be taken into account.
+
+# 4a. Exploratory Analysis - Volunteering
+
+When initially working with the data, we generated multiple plots with different variables to see if we could notice any noteworthy trends between volunteering frequency and civic indicators such as public officials, boycotts, etc. (These charts are not shown here for space, but the output is included in our code.)
+
+As part of our exploratory analysis, we also ran a groupby on state-level data to see if there was any correlation between the number of volunteers per state and the average hours volunteered; however, there did not seem to be any correlation between the two.
+
+We want to highlight two charts out of the ones we produced. The first chart depicts the top and bottom five states by average hours spent volunteering:
+
+![Top 5 and Bottom 5 US States by average hours spent volunteering]('top_bottom_5_states_avg_volunteering.png')
+
+The second chart depicts volunteering frequency when measured against voters and nonvoters:
+
+![Volunteering Frequency for Voters and Non-Voters]('if_volunteered_last_year.png')
+
+An interesting point from our exploratory analysis is that in each volunteering category, the majority of people did vote in their local election. However, it is unclear if this is simply correlation, as AmeriCorps may disproportionately attract the kind of person already primed to vote in their local election and be politically engaged. We will engage this question of correlation further with our Shiny app results. 
+
+
+# 4b. Polarization Analysis
+
+With the ANES data, we focused more specifically on measuring political polarization, to try to examine our hypothesis that volunteering would correlate negatively with polarization. 
+
+As mentioned above, we devised a simple "spread" variable from Bramson et al. to measure polarization. We then graphed each state’s spread alongside average political engagement score and average volunteer hours. As an example, here is a graph of spread of views on Democrat Party ideological position, including volunteering hours: 
+
+![Spread of views on Democrat Party](dem_graph_spread_2.png)
+
+We found that these graphs do not appear to show a significant meaningful correlation between extreme views and volunteering in either Democrat or Republican analyses; we may have chosen some of the states with very high or very low spread, and it is clear that there is not much of a relationship, with high spread being found in some higher-volunteer states and some lower-volunteer states. 
+
+In the future, causal techniques such as regression analysis with controls for potential bias coming from variables such as income and education, or a difference-in-differences approach examining specific states over time, could better help to precisely measure polarization alongside political engagement.
+
+
+# 5. Dynamic Plots in Shiny - Demographics vs. Volunteering Rate/Political Engagement
+
+Building off of our exploratory analysis, we wanted to more easily see the correlations between volunteerism, political engagement, and potential confounders like income and education. We made a Shiny dashboard app using the CEV/VCL data that lets us see demographics (age, education level, income, US state, etc.) on the X-axis and the user's choice of volunteer rates or political engagement on the Y-axis. 
+
+A screenshot of the app is here:
+![Shiny dashboard screenshot](shiny_screenshot.png)
+
+As an example, we can see here that volunteering is positively correlated with educational attainment, with over 25% of PhD/professional/master’s degree holders having volunteered in 2021.
+
+Using this app, we were able to find the most common traits associated with volunteering and civic engagement for 2021: family income and education, marital status, age, and being of White or Native American/Alaskan Indian heritage.
+
+We also found that women and rural inhabitants were slightly more likely to volunteer than men/urban inhabitants, but civic engagement remained the same. Additionally (but not surprisingly) social media was a negative predictor of volunteering, but not civic engagement. 
+
+This analysis reveals something critical about our hypothesis- while volunteering can still be a solution to low civic engagement, we can’t dismiss that both are simply correlated with other overarching demographic factors like income, education, and race, which makes sense as those factors can indicate well-off people having more resources and time to volunteer than others.
+
+
+# 6. Conclusion/Takeaways
+
+As mentioned before, our data and analysis has several disclaimers and caveats that we cannot fully account for. Nevertheless, our takeaways are here in order:
+
+1. Volunteers are more likely to vote than non-volunteers, but this is less likely to be a causation and more a correlation of demographic factors
+2. We did not find a meaningful correlation between volunteering and polarized attitudes; the evidence that volunteering in particular has a positive effect on polarization and engagement seems weak. 
+3. We found that predictors of volunteering and civic engagement are concentrated in disproportionately well-off, privileged populations.
+
+For organizations like AmeriCorps that want to attract younger or more diverse volunteers, as well as improving civic participation/engagement in general, this has important implications- organizations like those should consider that simple appeals to volunteer more, or attempts to diversify volunteer populations, may not mean much without additional incentives that can address the structural barriers of volunteering.
+
+While volunteering can still be a solution to low civic engagement, and we can speak personally to its interpersonal benefits, we can’t dismiss that both are simply correlated with other overarching demographic factors like income, education, and race. This should give us pause to the theory that volunteering is a neat solution to reducing polarization and improving civic engagement in and of itself, but future studies can examine specific populations of low-income or other "non-typical" volunteers that reported positive outcomes- perhaps volunteering itself has certain aspects (like community, sense of purpose, etc.) that can still be valuable regardless of socioeconomic status.
+
+# 7. Coding Analysis (Not Shown in Writeup)
 
 ```{python}
 vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
-
-#I found out the data type is int64 for one df and object for the other
 
 cev_2021_raw = cev_2021_raw.astype(str)
 vcl_supplement_raw = vcl_supplement_raw.astype(str)
@@ -117,7 +200,6 @@ cev_all_2021.head(5)
 ```{python}
 from config import selected_variables, rename_mapping
 
-
 # selected_variables = ['hrhhid', 'hrhhid2', etc.]
 # This chooses the variables we want from the merged raw data
 
@@ -135,32 +217,7 @@ cev_all_2021_filter = cev_all_2021_filter.loc[:, ~cev_all_2021_filter.columns.du
 ```
 
 
-The data is a mix of numeric code and qualitative input, so we need to keep the qualitative input while mapping only numeric codes. The qualitative input is outside of the data dictionary, so it won't get picked up by any mapping functions and will be transmuted into NaN data. We will make a function that identifies all the values in the data that aren't picked up by our data dictionaries in config.py.
-
-For example, here's a sample from config.py:
-
-Renaming pes16 - Volunteered Past Year
-In the past 12 months, did [you/[NAME]] spend any time volunteering for any organization or association?
-
-pes16_dict = {
-    '1': 'Yes',
-    '2': 'No',
-    '-1': 'Not in Universe',
-    '-3': 'Refusal',
-    '-2': 'Do Not Know',
-    '-9': 'No Answer',
-    '.u': 'No Answer',
-    '.r': 'Refusal',
-    '.n': 'Not in Universe',
-    '.d': 'Do Not Know'
-}
-
-If there are some entries in this column that are already coded "Yes" or "No", our existing mapping won't account for them and will turn them into NANs. That's not desirable. We want to catch those and account for them.
-
 ```{python}
-#For testing purposes, delete later
-cev_pre_clean_test = cev_all_2021_filter.copy()
-
 
 # Attribution: Asked ChatGPT "why isn't config.py updating when I add dictionaries to it; ChatGPT suggested using importlib reload"
 # Import and reload config
@@ -261,61 +318,7 @@ cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Sta
 
 ```
 
-Lastly, export the cleaned data as a csv for plotting purposes
 
-```{python}
-import os
-from pathlib import Path
-
-shiny_data_path = Path("shiny-app/basic-app/data")
-
-# Create directory if it doesn't exist
-shiny_data_path.mkdir(parents=True, exist_ok=True)
-
-# Save dataset
-cev_all_2021_filter.to_csv(
-    shiny_data_path / "cev_2021_cleaned.csv", index=False)
-
-print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
-
-```
-
-
-Read in data from American National Election Studies
-```{python}
-#polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
-
-polarization = pd.read_csv("/Users/justinesilverstein/Desktop/ppha30538_final_project/anes_timeseries_2020_csv_20220210.csv")
-```
-
-Important elements of the ANES Codebook
-
-1. Note on geography:
-
-"Some variables have been removed from the full release dataset in order to protect
- respondent confidentiality....
- Examples of restricted variables include, but are not limited to: detailed geography,
- detailed religious denomination..."
-
-2. Understanding the variables:
-" The Codebook includes the following information, where applicable, for each
- variable: the variable name (all variable names start with a “V”, and summary
- variables end with the suffix “x”), variable label (with “PRE:” indicating that it is from
- the pre-election study), question wording/variable meaning, response/code values
- and meanings, universe (where only a subset of respondents appear in a variable,
- which respondents those should be; note that universes are not included for most
- summary variables), associated survey question(s), information about whether
- randomization was used, interviewer instructions, and any other notes about the
- variable"
-
-Subset for the useful columns
-
-List 1: This list contains only pre-election data, it is designed to capture variables
-covering some geographic information (V201011, V201013a, V201013b, V201014a, V201014b)
-
-List 2: This list contains only pre-election data, it is designed to capture variables
-covering information about self-assessments of political positioning
-(i.e. left, right, center)
 ```{python}
 #list 1
 subset_list_1 = [column for column in polarization if "V2010" in column]
@@ -345,34 +348,121 @@ sub_polarization = polarization.filter(items= subset_list)
 sub_polarization["Observations"] = 1
 ```
 
-Some more data cleaning
 
-Analyzing Question V201200, which is a question asking:
 
-"Where would you place yourself on this scale, or haven’t you
- thought much about this?
- Value Labels-9. Refused -8. Don’t know 
-1. Extremely liberal 
-2. Liberal 
-3. Slightly liberal 
-4. Moderate; middle of the road 
-5. Slightly conservative 
-6. Conservative 
-7. Extremely conservative 
-99. Haven’t thought much about this"
+```{python}
+
+
+##Note: The below debugging code was suggested by ChatGPT to deal with some column value errors caused by political_engagement_score mutation. We weren't sure how to fix the errors without taking out the debugging code.
+
+# Debugging code - Before engagement score calculation
+print("Columns before adding engagement score:")
+print(cev_all_2021_filter.columns.tolist())
+print("\nShape before:", cev_all_2021_filter.shape)
+
+
+# Mutate the engagement score variable we came up with in config.py
+cev_all_2021_filter = add_engagement_score(cev_all_2021_filter)
+
+# More debugging code
+print("\nColumns after adding engagement score:")
+print(cev_all_2021_filter.columns.tolist())
+print("\nShape after:", cev_all_2021_filter.shape)
+
+# Before saving
+print("\nVerifying engagement score columns exist:")
+print("'political_engagement_score' exists:",
+      'political_engagement_score' in cev_all_2021_filter.columns)
+print("'engagement_level' exists:",
+      'engagement_level' in cev_all_2021_filter.columns)
+
+```
+
+```{python}
+
+#confirm this code exports the data into the 'data' folder into the repo
+
+
+# Lastly, export the cleaned data as a csv for plotting purposes
+shiny_data_path = Path("shiny-app/basic-app/data")
+
+# Create directory if it doesn't exist
+shiny_data_path.mkdir(parents=True, exist_ok=True)
+
+# Save dataset
+cev_all_2021_filter.to_csv(
+    shiny_data_path / "cev_2021_cleaned.csv", index=False)
+
+print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
+
+```
+
+
+```{python}
+
+'''As with the CEV/VCL data, our goal was to subset the data so that it only contains relevant variables. We accomplish this by making two lists:
+
+List 1: This list is designed to capture variables covering geographic information (V201011, V201013a, V201013b, V201014a, V201014b)
+
+List 2: This list is designed to capture variables covering information about assessments of political positioning (i.e. left, right, center)
+
+'''
+
+#list 1
+subset_list_1 = [column for column in polarization if "V2010" in column]
+
+#list 2
+subset_list_2 = [column for column in polarization if "V2012" in column]
+
+#put the lists together
+#make a loop 
+
+#empty receiver
+subset_list = []
+
+#loop 1
+for value in subset_list_1:
+        subset_list.append(value)
+
+#loop 2
+for value in subset_list_2:
+        subset_list.append(value)                    
+
+#subset 
+sub_polarization = polarization.filter(items= subset_list)
+
+#add a column that just equals 1 to use for tracking the number
+#of entries
+sub_polarization["Observations"] = 1
+```
 
 ```{python}
 #Make variables more clear
 
+'''Analyzing Question V201200, which is a question asking:
+
+"Where would you place yourself on this scale, or haven’t you
+ thought much about this?
+ Value Labels-9. Refused -8. Don’t know 
+1. Extremely Liberal 
+2. Liberal 
+3. Slightly Liberal 
+4. Moderate; middle of the road 
+5. Slightly Conservative 
+6. Conservative 
+7. Extremely Conservative 
+99. Haven’t thought much about this"
+'''
+
 crosswalk_polar = pd.DataFrame({
     "Self_Rating_(V201200)":[-9, -8, 1, 2, 3, 4, 5, 6, 7, 99],
-    "Titles_(V201200)": [
+    "Ideology_(V201200)": [
         "Refused", "Don't Know", "Extremely Liberal",
         "Liberal", "Slightly Liberal", 
         "Moderate; middle of the road",
-        "Slightly conservative",
+        "Slightly Conservative",
         "Conservative",
-        "Extremely conservative",
+        "Extremely Conservative",
         "Haven’t thought much about this"
     ]
     })
@@ -380,37 +470,720 @@ crosswalk_polar = pd.DataFrame({
 #merge using crosswalk
 sub_polarization = sub_polarization.merge(crosswalk_polar, left_on = "V201200", right_on = "Self_Rating_(V201200)")
 
+#We use this data to make a dataframe aggregated by state, and then we can show correlation between measure of polarity and the share of respondents in a state who did volunteer work.
+
 ```
 
-Make dataframe where all data is aggregated by state, and then
-we can show correlation between measure of polarity and 
-the share of respondents in a state who did volunteer work.
 
-Clean data to produce some geographic information
 
-V201013a
+
 ```{python}
+
 #Replace FIPS codes with states
+
+# Note that we previously used two ANES variables as US State variables,  with only "US State 2" being used in analysis, purely because it has more in-universe entries. This appears to be partially due to respondent reactions to different questions, and partially due to information restrictions on the dataset. As such, "US State" is only used for CEV data. 
+
+from us import states
+
 fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
 
-sub_polarization['US State'] = pd.to_numeric(sub_polarization['V201013a'], errors='coerce')
+sub_polarization["US State 2"] = pd.to_numeric(sub_polarization['V201014b'], errors='coerce')
 
-sub_polarization['US State'] = sub_polarization['US State'].map(fips_to_state)
+sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_state)
+
 
 ```
 
 
-Citation:  American National Election Studies. 2021. ANES 2020 Time Series 
-Study Full Release [dataset and documentation]. July 19, 2021 
-version. www.electionstudies.org 
+```{python}
+
+'''
+We clean data related to V201228, which asks:
+
+"Generally speaking, do you usually think of yourself as [a Democrat, a Republican / a Republican, a Democrat], an
+independent, or what?"
+
+-9. Refused
+-8. Don’t know
+-4. Technical error
+0. No preference {VOL - video/phone only}
+1. Democrat
+2. Republican
+3. Independent
+5. Other party {SPECIFY}
+
+'''
+
+crosswalk_party_2 = pd.DataFrame({
+    "Party_Numbers_(V201228)": [-9, -8, -4, 0, 1, 2, 3, 5],
+    "Party_Affiliation_(V201228)": [
+        "Refused", "Don't know", "Technical error", "No Preference", "Democrat",
+        "Republican", "Independent", "Other party"
+    ]})
+
+sub_polarization = sub_polarization.merge(
+    crosswalk_party_2, left_on="V201228", right_on="Party_Numbers_(V201228)")
 
 
-2. Plotting (25%)
-    * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
-    * As well as one `shiny` app with one dynamic plot
-        * You can also add additional dynamic plots into your app to substitute for a static plot. So, a `shiny` app with 3 dynamic plots will count for full credit.
+```
+
+
+We will use two measures of polarization from the ANES data; each provides some amount of information that can be interpreted to indicate polarization to a certain extent, though both have their drawbacks.
+
+1. Share of Outliers - we create a series of functions that group respondents by party Democrats with conservative-leaning ideologies, and Republicans with liberal-leaning ones. 
 
 ```{python}
+def find_share(df, state):
+    """
+    Processes a subset of survey data for a specific state to identify and count party-affiliated respondents and ideological outliers.
+
+    Returns a subset of the input DataFrame, including new columns for:
+        - 'Party_Count': Counts of individuals affiliated with major parties.
+        - 'Outliers': Counts of ideological outliers within each party.
+"""
+    #subset by state
+    sub = df[df["US State 2"] == state]
+    Party_People = ["Democrat", "Republican"]
+    Conservatives = ["Slightly conservative",
+    "Conservative",
+    "Extremely conservative"]
+    Liberals = ["Extremely Liberal",
+    "Liberal", "Slightly Liberal"]
+    #count of partisans
+    Party_Count = []
+    #count of entries that are Dem but conservative or Repub but liberal
+    Outlier_box = []
+    #get Party_Count
+    for index, entry in sub.iterrows():
+            if entry["Party_Affiliation_(V201228)"] in Party_People:
+                    Party_Count.append(1)
+            else:
+                    Party_Count.append(0)
+    
+    for index, entry in sub.iterrows():
+            if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                    Outlier_box.append(1)
+            elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                    Outlier_box.append(1)
+            else:
+                    Outlier_box.append(0)
+    
+    sub["Party_Count"] = Party_Count
+    sub["Outliers"] = Outlier_box
+    return sub
+        
+Z = find_share(sub_polarization, "IL")                     
+
+IL_Group = Z.groupby("Party_Affiliation_(V201228)")[["Outliers", "Party_Count"]].sum().reset_index()
+
+IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count"])
+
+
+```
+
+```{python}
+
+def seek_polar(df, state):
+    '''
+    Aggregates polarization data for a specific state, calculating the share of ideological outliers within party-affiliated populations.
+
+    '''
+    mod_df = find_share(df, state)
+    mod_df = mod_df.groupby(
+        "Party_Affiliation_(V201228)"
+        )[["Outliers", "Party_Count"]].sum().reset_index()
+
+    mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+    return mod_df
+
+#Example with IL
+seek_polar(sub_polarization, "IL")
+
+
+
+```
+
+
+```{python}
+
+
+def find_share_state(df, state):
+    '''
+    Generates a modified subset of survey data for a given state, identifying partisans and ideological outliers.
+'''
+    #subset by state
+    sub = df[df["US State 2"] == state]
+    Party_People = ["Democrat", "Republican"]
+    Conservatives = ["Slightly Conservative",
+    "Conservative",
+    "Extremely Conservative"]
+    Liberals = ["Extremely Liberal",
+    "Liberal", "Slightly Liberal"]
+    #count of partisans
+    Party_Count = []
+    #count of entries that are Dem but conservative or Repub but liberal
+    Outlier_box = []
+    #get Party_Count
+    for index, entry in sub.iterrows():
+            if entry["Party_Affiliation_(V201228)"] in Party_People:
+                    Party_Count.append(1)
+            else:
+                    Party_Count.append(0)
+    
+    for index, entry in sub.iterrows():
+            if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+                    Outlier_box.append(1)
+            elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+                    Outlier_box.append(1)
+            else:
+                    Outlier_box.append(0)
+    
+    sub["Party_Count"] = Party_Count
+    sub["Outliers"] = Outlier_box
+    return sub
+    
+
+
+```
+
+```{python}
+def find_share_nation(df):
+    '''
+    Processes survey data at the national level to identify party-affiliated respondents and ideological outliers.
+'''
+    Party_People = ["Democrat", "Republican"]
+    Conservatives = ["Slightly Conservative",
+                     "Conservative",
+                     "Extremely Conservative"]
+    Liberals = ["Extremely Liberal",
+                "Liberal", "Slightly Liberal"]
+    # count of partisans
+    Party_Count = []
+    # count of entries that are Dem but conservative or Repub but liberal
+    Outlier_box = []
+    # get Party_Count
+    for index, entry in df.iterrows():
+        if entry["Party_Affiliation_(V201228)"] in Party_People:
+            Party_Count.append(1)
+        else:
+            Party_Count.append(0)
+    # get outlier count
+    for index, entry in df.iterrows():
+        if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+            Outlier_box.append(1)
+        elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+            Outlier_box.append(1)
+        else:
+            Outlier_box.append(0)
+
+    df["Party_Count"] = Party_Count
+    df["Outliers"] = Outlier_box
+    return df
+
+```
+
+```{python}
+def polar_table(df):
+    '''
+    Generates a summary table of polarization data, grouping by state to calculate the share of ideological outliers.
+    '''
+    mod_df = find_share_nation(df)
+    #make a grouped df that takes sum of each states' outliers and 
+    #people who identify with a party
+    mod_df = mod_df.groupby("US State 2")[
+        ["Outliers", "Party_Count"]
+        ].sum().reset_index()
+    mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+    return mod_df
+
+
+```
+
+
+```{python}
+polar_by_party = polar_table(sub_polarization)
+
+#graphing percentages
+percent_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Percent_Outliers", title = "Outlier Share"),
+    alt.Color("US State 2")
+)
+
+#graphing sums
+sum_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Outliers", title = "Outlier Sum"),
+    alt.Color("US State 2")
+)
+
+```
+
+```{python}
+
+'''
+In a paper on quantifying polarization written by Aaron Bramson et al (https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion- essentially the gap between the most extreme political positions.
+
+In the paper, Bramson et al. explain: "Polarization in the sense of spread can be measured as the value of the agent with the highest belief value minus the value of the agent with the lowest belief value (sometimes called the ‘range’ of the data).""
+
+We (imperfectly) approximate this using two more variables: V201206 and V201207. These ask respondents to position political parties on the political spectrum. We can select the most ideologically distant nodes on the personal ideology scale (extremely liberal and extremely conservative) and capture how far apart their conceptions of each party are,  on average, and then disaggregate by state.
+
+We will assign the different ideological positions to different points on a spectrum, namely:
+-3, -2, and -1 are "Extremely Liberal", 
+"Liberal",  and "Slightly Liberal"; 
+
+and:
+0 is "Moderate; middle of the road"; 
+
+finally,
+1, 2, and 3 are "Slightly conservative",
+"Conservative" and "Extremely conservative.""
+
+We'll then compare average positions by state. For example, if the average 
+extremely liberal respondent in Texas places Democrats at at -1 (slightly liberal) and the average for the extremely conservative respondents in -3 (extremely liberal), then the distance between the two is 4, meaning Texas would have a spread of 4 for this question.
+'''
+crosswalk_V201206 = pd.DataFrame({
+    #the dataset's scaled
+    "Dem_Num_(V201206)":[-9, -8, 1, 2, 3, 4, 5, 6, 7],
+    #the dataset's ideology
+    "Dem_Ideology_(V201206)": [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly Conservative",
+        "Conservative",
+        "Extremely Conservative"
+    ],
+    #new values for comparison
+    "Dem_Positioning(V201206)":[0, 0, -3, -2, -1, 0, 1, 2, 3]
+    })
+
+#They're exactly the same
+crosswalk_V201207 = pd.DataFrame({
+    #the dataset's scale
+    "Repub_Num_(V201207)":[-9, -8, 1, 2, 3, 4, 5, 6, 7],
+    #the dataset's ideology
+    "Repub_Ideology_(V201207)": [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly Conservative",
+        "Conservative",
+        "Extremely Conservative"
+    ],
+    #new values for comparison
+    "Repub_Positioning(V201207)":[0, 0, -3, -2, -1, 0, 1, 2, 3]
+    })
+
+#crosswalking V201206
+sub_polarization = sub_polarization.merge(crosswalk_V201206, left_on = "V201206", right_on = "Dem_Num_(V201206)")
+
+#crosswalking V201207
+sub_polarization = sub_polarization.merge(crosswalk_V201207, left_on = "V201207", right_on = "Repub_Num_(V201207)")
+
+#drop Dem_Num and Repub_Num for clarity (we'll be using the reassigned numbers)
+sub_polarization = sub_polarization.drop(["Dem_Num_(V201206)", "Repub_Num_(V201207)"], axis = 1)
+```
+
+
+```{python}
+
+'''We use the Positioning columns to compare the average party position selections between the 2 extremes. '''
+
+#Step 1: First grouping
+
+#filter out all self-identifiers that aren't "Extremely Liberal"
+#or Extremely Conservative
+ex_polarization = sub_polarization[
+    (sub_polarization["Ideology_(V201200)"] == "Extremely Conservative") | 
+    (sub_polarization["Ideology_(V201200)"] == "Extremely Liberal")
+    ]
+
+#filter out entries of Party Ideology Position that are "Don't Know" and "Refused"
+ex_polarization = ex_polarization[
+    (sub_polarization["Dem_Ideology_(V201206)"] != "Don't Know") &
+    (sub_polarization["Dem_Ideology_(V201206)"] != "Refused") &
+    (sub_polarization["Repub_Ideology_(V201207)"] != "Don't Know") &
+    (sub_polarization["Repub_Ideology_(V201207)"] != "Refused") 
+    ]
+
+
+#make column for Liberal (i.e. Left tail) and Conservative (i.e. Right tail) 
+Extreme_L_C = [
+    "Liberal" if row["Ideology_(V201200)"] == "Extremely Liberal" else "Conservative" 
+    for index, row in ex_polarization.iterrows()
+    ]
+
+#save to dataframe
+ex_polarization["Extreme_Position"] = Extreme_L_C
+
+#groupby Extreme_Position and US State 2 and get average Dem and Repub positioning. Then save this to a df called position_groups
+position_groups = ex_polarization.groupby(["US State 2", "Extreme_Position"])[["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]].mean().reset_index()
+```
+
+
+
+
+```{python}
+'''
+Step 2: We use the variable position_groups to create a dataframe that has 4 columns:
+(1) The position Liberals give Democrats on the spectrum
+(2) the position Conservatives give Democrats on the spectrum
+(3) the position Liberals give Republicans on the spectrum
+(4) the position Conservatives give Republicans on the spectrum
+'''
+
+#Attribution: Asked ChatGPT for help fixing my list comprehension. Also asked ChatGPT how to flatten a multi-index column, which recommended ##source: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
+
+
+#pivot on Extreme_Position
+pivot_position = position_groups.pivot(
+    index = "US State 2", 
+    columns = "Extreme_Position", 
+    values = ["Dem_Positioning(V201206)", "Repub_Positioning(V201207)"]
+    )
+
+#reset index to retrieve US State 2 variable from index
+pivot_position = pivot_position.reset_index()
+
+#Flatten multi-index by joining the upper and lower
+#levels of the multi-indexed columns together
+pivot_position.columns = ['_'.join(col).strip() for col in pivot_position.columns.values]
+
+#rename flattened columns
+pivot_position = pivot_position.rename(
+        columns = {
+            "US State 2_":"US State 2", 
+            "Dem_Positioning(V201206)_Conservative":"Dem_Position_C",
+            "Dem_Positioning(V201206)_Liberal":"Dem_Position_L",
+            "Repub_Positioning(V201207)_Conservative":"Repub_Position_C",
+            "Repub_Positioning(V201207)_Liberal":"Repub_Position_L"
+        }
+    )
+
+
+```
+
+
+
+
+```{python}
+
+'''Step 3: Now, we use those 4 columns to create the spread, meaning the absolute value of the difference betweeen:
+
+(1) The position Liberals give Democrats on the spectrum and the position Conservatives give Democrats on the spectrum
+
+(2) The position Liberals give Republicans on the spectrum and the position Conservatives give Republicans on the spectrum
+'''
+
+#Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
+#Asked ChatGPT how to flatten a multi-index column
+
+#capture spread variables
+pivot_position["Spread_Dem"] = abs(
+    pivot_position["Dem_Position_C"] - 
+    pivot_position["Dem_Position_L"]
+    )
+
+pivot_position["Spread_Repub"] = abs(
+    pivot_position["Repub_Position_C"] - 
+    pivot_position["Repub_Position_L"]
+    )
+
+```
+
+
+
+
+```{python}
+
+'''
+Step 4: Now, we graph those differences and interpret these spreads as an indicator of polarization. We acknowledge that this is too simple an analysis to account for the full complexity of this kind of measurement, as polarization involves not just distance between extremes, but also clustering around them. We also acknowledge that our political scale assumes a linear ideological spectrum, which isn't always the case.
+
+
+'''
+
+#Opinion on the position of the Democratic Party
+Democratic_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Spread_Dem", 
+    title = "Spread of Views"),
+    alt.Color("US State 2")
+).properties(title = alt.TitleParams("Spread of Views on Democratic Party Ideological Position"))
+
+#Opinion on the position of the Republican Party
+Republican_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
+    alt.X("US State 2", title = "State"),
+    alt.Y("Spread_Repub", 
+    title = "Spread of Views"),
+    alt.Color("US State 2")
+).properties(title = alt.TitleParams("Spread of Views on Republican Party Ideological Position"))
+
+```
+
+
+
+```{python}
+
+'''
+Step 5: We merge the two datasets together on "US State 2". Note that this merged dataset could be misleading, because some of the merged variables only apply to the "extreme" respondents in each state, and so it's not representative of the entire state's respondents' positioning of different parties. We've dropped those variables from the merge to try to account for this.
+'''
+merged_polarization = sub_polarization.merge(pivot_position, left_on = "US State 2", right_on = "US State 2", how = "outer")
+
+#drop variables that don't make sense when merged
+merged_polarization = merged_polarization.drop([
+    "Dem_Position_C", "Dem_Position_L",
+    "Repub_Position_C", "Repub_Position_L"], 
+    axis = 1
+    )
+
+```
+
+
+
+```{python}
+
+'''Step 6: We merge the AmeriCorps CEV/VCL data with the spread data so far'''
+
+#remove 'Not in Universe', 'No Answer', 'Refused'
+#from cev_all_2021_filter
+
+Non_Number_List = [
+    'Not in Universe', np.nan, "Do Not Know",
+    'No Answer', 'Refused']
+
+cev_all_2021_all_number = cev_all_2021_filter[
+    ~cev_all_2021_filter["Hours_Spent_Volunteering"].isin(Non_Number_List)
+    ]
+
+#group volunteer rates by state
+group_cev = cev_all_2021_all_number.groupby(
+    "US State"
+    )[["Hours_Spent_Volunteering", 
+    "political_engagement_score"]].mean().reset_index()
+
+main_group = group_cev.merge(
+    pivot_position, left_on = "US State", right_on = "US State 2"
+)
+
+```
+
+
+```{python}
+
+'''
+Step 7: We create a function for viewing Political Engagement alongside spread, one generating a table with 2 states for comparison, and another 2 
+returning graphs
+'''
+
+#return table
+def engagement_spread_table(df, state_1, state_2):
+        sub = df[
+            (df["US State"] == state_1) |
+            (df["US State"] == state_2)]
+        sub = sub.filter(["US State", "political_engagement_score", "Spread_Dem", "Spread_Repub"])
+        return sub
+
+#return graph with Democratic positioning 
+def engagement_spread_graph_D(df, column):
+        graph = alt.Chart(df).mark_bar().encode(
+        alt.X("US State 2", title = "State", sort = "-y"),
+        alt.Y("Spread_Dem", title = "Spread of Extreme Views"),
+         alt.Color(
+            column, 
+            scale = alt.Scale(range = ["lightblue", "darkblue"])
+            )
+        ).properties(
+            title = alt.TitleParams(
+                "Spread of Views on Democratic Party Ideological Position"
+                )
+            )
+        return graph
+
+#return graph with Republican positioning 
+def engagement_spread_graph_R(df, column):    
+        graph = alt.Chart(df).mark_bar().encode(
+        alt.X("US State 2", title = "State", sort = "-y"),
+        alt.Y("Spread_Repub", title = "Spread of Extreme Views"),
+        alt.Color(
+            column, 
+            scale = alt.Scale(range = ["lightblue", "darkblue"]),
+            )
+        ).properties(
+            title = alt.TitleParams(
+                "Spread of Views on Republican Party Ideological Position"
+                )
+            )
+        return graph
+
+```
+
+
+
+```{python}
+
+#Below is an example of using our function to generate a political engagement score for different states: 
+
+#sample static table with 
+Sample_Table = engagement_spread_table(main_group, "IL", "OR")
+
+print(Sample_Table)
+```
+
+
+```{python}
+
+#And below are sample static graphs on Democratic and Republican positions:
+
+#using average political engagement
+Dem_Graph_Spread_1 = engagement_spread_graph_D(main_group, "political_engagement_score")
+
+#using average volunteer hours
+Dem_Graph_Spread_2 = engagement_spread_graph_D(main_group, "Hours_Spent_Volunteering")
+
+Dem_Graph_Spread_1.show()
+Dem_Graph_Spread_1.save('dem_graph_spread.png', format='png')
+
+Dem_Graph_Spread_2.show()
+Dem_Graph_Spread_2.save('dem_graph_spread_2.png', format='png')
+```
+
+
+```{python}
+#using average political engagement
+Repub_Graph_Spread_1 = engagement_spread_graph_R(main_group, "political_engagement_score")
+
+#using average volunteer hours
+Repub_Graph_Spread_2 = engagement_spread_graph_R(main_group, "Hours_Spent_Volunteering")
+
+Repub_Graph_Spread_1.show() 
+Repub_Graph_Spread_1.save('repub_graph_spread.png', format='png')
+
+
+Repub_Graph_Spread_2.show()
+Repub_Graph_Spread_2.save('repub_graph_spread_2.png', format='png')
+
+```
+
+
+Below is a atatic graph of ideological position in the US nationally as of 2020:
+
+```{python}
+alt.data_transformers.enable("vegafusion")
+#create list for graph to sort on 
+sorting_list = [
+        "Refused", "Don't Know", "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly Conservative",
+        "Conservative",
+        "Extremely Conservative",
+        "Haven’t thought much about this"
+    ]
+
+#filter out non-responses
+global_non_response_list = [
+    "Haven’t thought much about this",
+    "Refused", "Don't Know"
+    ]
+
+local_filter = sub_polarization[
+    ~sub_polarization["Ideology_(V201200)"].isin(global_non_response_list)
+]
+
+Ideological_Position_US = alt.Chart(local_filter).mark_bar().encode(
+    alt.X(
+        "Ideology_(V201200):N", 
+        title = "Ideological Position",
+        sort = sorting_list),
+    alt.Y("Observations", title = "Number of Respondents"),
+    alt.Color("Ideology_(V201200)", sort = sorting_list)
+).properties(title = alt.TitleParams(
+            f"Ideological Position in the U.S."
+        ))
+
+Ideological_Position_US.show()
+
+#Note: We removed non-responses, likely creating a bias in the relative size of the remaining groups (it's difficult to predict the direction of said bias, however.)
+```
+
+
+
+
+```{python}
+#Additionally, below is a sample static graph of ideological position by state, using IL as an example:
+
+def ideology_by_state(df, state):
+        #filter out non-responses
+        non_response_list = [
+            "Haven’t thought much about this", 
+            "Refused", "Don't Know"
+            ]
+        sub = df[
+            ~df["Ideology_(V201200)"].isin(non_response_list)
+            ]
+        #filter for the selected state
+        sub = sub[sub["US State 2"] == state]
+        #create list for graph to sort on 
+        sorting_list = [
+        "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly Conservative",
+        "Conservative",
+        "Extremely Conservative"
+        ]
+        graph = alt.Chart(sub).mark_bar().encode(
+            alt.X(
+                "Ideology_(V201200):N", 
+                title = "Ideological Position",
+                sort = sorting_list
+                ),
+            alt.Y("count():Q", title = "Number of Respondents"),
+            alt.Color("Ideology_(V201200):N", sort = sorting_list)
+        ).properties(title = alt.TitleParams(
+            f"Ideological Position in {state}"
+        ))
+        return graph
+
+#Example for Illinois
+Ideological_Position_IL = ideology_by_state(sub_polarization, "IL")
+
+Ideological_Position_IL.show()
+
+```
+
+
+
+```{python}
+
+#Lastly, we will use the merged AmeriCorps and ANES data to plot a correlation between volunteer hours and political engagement:
+
+Correlation_Graph = alt.Chart(main_group).mark_circle().encode(
+    alt.X("Hours_Spent_Volunteering", title="Average Volunteer Hours"),
+    alt.Y("political_engagement_score", title="Average Political Engagement Score").scale(
+        domain=(
+            main_group["political_engagement_score"].min() - 3,
+            main_group["political_engagement_score"].max() + 3
+        )
+    ),
+    alt.Color("US State 2")
+).properties(title=alt.TitleParams(
+    "Correlation between volunteer hours and political engagement"
+))
+
+Correlation_Graph.show()
+
+```
+
+
+
+```{python}
+
+#Below is the exploratory data analysis (h/t Justine)
+
+# Basic plot to show Frequency of Volunteering Categories
+
 filtered_data = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &
@@ -437,7 +1210,10 @@ chart.show()
 chart.save('volunteer_frequency.png', format='png')
 ```
 
+
 ```{python}
+# Plot to show Volunteering Frequency based on if one volunteered last year (2020)
+
 volunteered_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
@@ -481,7 +1257,11 @@ chart.show()
 chart.save('if_volunteered_last_year.png', format='png')
 ```
 
+
 ```{python}
+# If they voted or not in the local election with no orange
+
+
 #filtered if did vote
 volunteered_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
@@ -526,8 +1306,12 @@ chart = alt.Chart(combined_counts).mark_bar().encode(
 chart.show()
 chart.save('if_voted_in_local_election.png', format='png')
 ```
- 
+
+
 ```{python}
+# What is the correlation or relationship between volunteering frequency, news consumption and voting? 
+
+
 volunteering_frequencies = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
@@ -579,7 +1363,11 @@ chart.show()
 chart.save('news_consumption_volunteering_correlation.png', format='png')
 ```
 
+
 ```{python}
+
+# If consumed news basically everyday, what is your voting frequency 
+
 volunteering_frequencies = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &  
@@ -617,17 +1405,10 @@ chart.show()
 chart.save('volunteering_vs_voting_news_daily.png', format='png')
 ```
 
-```{python}
-from shiny import App, render, ui, reactive
-from shinywidgets import render_altair, output_widget
-import pandas as pd
-import altair as alt
-
-import os
-from pathlib import Path
-```
 
 ```{python}
+# Does the consumption of news impact hours spent volunteering?
+
 filtered_data = volunteering_frequencies[
     (volunteering_frequencies['Frequency_Of_News_Consumption'].notna()) & 
     ~volunteering_frequencies['Frequency_Of_News_Consumption'].isin(['Basically Every Day', 'Refusal', 'Do Not Know', 'No Answer']) & 
@@ -652,9 +1433,11 @@ chart.show()
 chart.save('boxplot_news_consumption_vs_volunteering_hours.png', format='png')
 ```
 
-
-The above was used as exploratory code to analyze the data, especially to see how variables like news consumption and volunteering frequency interacted with each other. Also, we wanted to see how the correlation lookked in comparison to each other, such as voting frequency with if one voted or if one boycotted. The below code uses the US State variable to figure out if there is a correlation between how many volunteers come from a given state and how many hours they volunteered. From what we saw, there did not seem to be a strong correlation between state and hours volunteered. The number of volunteers from a given state was more reflective of population size than any kknd of potential ideology.
 ```{python}
+
+
+# preparing some data, to list the average number of hours volunteered by state
+
 filtered_data = volunteering_frequencies[
     (volunteering_frequencies['Hours_Spent_Volunteering'].notna()) & 
     ~volunteering_frequencies['Hours_Spent_Volunteering'].isin(['Not in Universe', 'Do Not Know', 'Refusal'])
@@ -667,6 +1450,11 @@ filtered_data = filtered_data[filtered_data['Hours_Spent_Volunteering'].notna()]
 average_hours_per_state = filtered_data.groupby('US State')['Hours_Spent_Volunteering'].mean().reset_index()
 
 average_hours_per_states = average_hours_per_state.sort_values(by='Hours_Spent_Volunteering', ascending=False)
+```
+
+
+```{python}
+# using the above data to show the top and bottom 5 states when it comes to average hours of volunteering
 
 top_bottom_states = pd.concat([average_hours_per_state.nlargest(5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])
 
@@ -674,7 +1462,7 @@ scatter_plot = alt.Chart(top_bottom_states).mark_point(size=100, color='blue').e
     x=alt.X('US State:N', title='US State', sort='-y'),  
     y=alt.Y('Hours_Spent_Volunteering:Q', title='Average Hours Spent Volunteering')  
 )
-chart = scatter_plot
+chart = scatter_plot + top_bottom_labels
 
 chart = chart.properties(
     title='Top 5 and Bottom 5 States by Average Hours Spent Volunteering',
@@ -689,8 +1477,10 @@ chart.show()
 chart.save('top_bottom_5_states_avg_volunteering.png', format='png')
 ```
 
-The following the total number of volunteers per state with each color correlating with a volunteer frequency category.
+
 ```{python}
+
+# the following chart is total number of volunteers per state and stacked by volunteer frequency
 filtered_data = volunteering_frequencies.dropna(subset=['US State'])
 
 aggregated_data = filtered_data.groupby(['US State', 'Volunteering_Frequency']).size().reset_index(name='Count')
@@ -727,8 +1517,9 @@ final_chart
 final_chart.save('number_volunteers_per_state.png', format='png')
 ```
 
- More exploratory data: 
+
 ```{python}
+# chart depicted share of people who boycotted based on volunteering frequency
 #boycott chart
 #filtered if did vote
 volunteered_last_year = cev_all_2021_filter[
@@ -777,6 +1568,7 @@ chart.show()
 chart.save('boycotted.png', format='png')
 ```
 
+# same as above except now if person contacted public official
 ```{python}
 volunteered_last_year = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &  
@@ -822,58 +1614,3 @@ chart.show()
 chart.save('contacted.png', format='png')
 ```
 
-
-
-
-
-
-
-
-4. Reproductibility (10%)
-    * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see "Final Repository" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments
-5. Git (10%)
-    * You should submit your project as a Git repository.
-    * Create multiple branches as you work for different pieces of the analysis. Branches may correspond to work done by different partners or to different features if you are working alone.
-    * Your final repository should have one branch: `main`
-    * We reserve the right to check the git commit history to ensure that all members have contributed to the project.
-6. Extra credit: text processing (up to 10%)
-    * Introduce some form of text analysis using natural language processing methods discussed in class.
-
-## Writeup (15%)
-* You will then spend *no more than 3 pages* writing up your project. 
-* The primary purpose of this writeup is to inform us of what we are reading before we look at your code.
-* You should describe your research question, then discuss the approach you took and the coding involved, including discussing any weaknesses or difficulties encountered. 
-* Display your static plots, and briefly describe them and your Shiny app. Discuss the policy implications of your findings.
-* Finish with a discussion of directions for future work. 
-* The top of your writeup should include the names of all group members, their respective sections, and Github user names.
-
-## Presentation (15%)
-* On the day of the presentation, one of the group members will be *randomly selected* to give a *8-minute in-class presentation*. All group members must be present.
-* Any group member who is not present will receive an automatic 0 for the presentation portion of the final project.
-* The presentation will be of slides that largely mirror the structure of the writeup, but will be more focused on discussing the research question and results as opposed to explaining the details of the coding. 
-
-# Final Repository
-Your final repository must contain the following:
-
-* Documentation and Meta-data
-    * A `requirements.txt` file 
-    * A `.gitignore` file that ignores unneeded files (e.g. `venv`) 
-* Writeup: a user should be able to knit your `.qmd` file and re-generate the HTML version of your writeup
-    * The `.qmd` file associated with your write-up
-    * An HTML and PDF'd version of your writeup
-    * A folder named `pictures` that contains the files for any pictures required to knit your writeup
-* Data
-    * A folder named `data` that contains the initial, unmodified dataframes you download and the final versions of the dataframe(s) you built.
-    * If the dataset is greater than 100MB, it can hosted on Drive or Dropbox and the link should be provided in your .`qmd` file as a comment
-* Shiny app
-    * A folder named `shiny-app` that contains the code and any additional files needed to deploy your app
-    * A user should be able to deploy your app directly from the command line within this folder
-
-
-# Key Dates
-* By November 1
-    * Proposal submitted to Canvas quiz
-    * (Optional) meeting with Professor Ganong, Professor Shi, or Head TA Ozzy Houck
-    * Sign up for presentation slot
-* December 2- December 5: in-class presentations
-* December 7, 5PM: final repository submitted via Gradescope
