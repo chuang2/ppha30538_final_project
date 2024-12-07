@@ -498,6 +498,8 @@ sub_polarization = sub_polarization.merge(crosswalk_party_2, left_on = "V201228"
 
 ```
 
+Attribution: The use of the crosswalk + merge strategy comes from Pset6.
+
 # Measures of Polarization
 
 We will use two measures of polarization; each provides some 
@@ -505,9 +507,41 @@ amount of information that can be interpreted to
 indicate polarization to a certain extent, though neither of which 
 are fully empirically sound. 
 
-The first we will call Share of Outliers. 
+The first we will call Share of Outliers. This one 
+is used for data exploration here, we are not 
+directly graphing the relationship between 
+volunteering and polarization with it.
+The objective here is to 
+capture the number of people within the two
+ most-popular American
+political parties (the Democratic and Republican 
+parties) that 
+diverge from the prevailing political alignment 
+in their 
+respective parties. That means the number of Democrats that 
+identify as Conservative, and the number of
+Republicans that identify as Liberal. In the book "Political
+Polarizationin American Politics," edited by Daniel J. Hopkins,
+there is a section in the first chapter 
+entitled "Americans are not polarized,
+just better sorted." This section notes that "Self-identified 
+Democrats have become
+more homogeneously liberal and 
+self-identified Republicans more
+homogeneously conservative." And though the title 
+of the section might suggest otherwise, the authors 
+of this section make sure to note that: "...none of this is to 
+argue that sorting is unimportant.
+It is, and sorting contributes to 
+the extreme partisanship we see in 
+Washington and many of our state 
+capitals." So we would argue that while this 
+might not strictly measure polarization, it is a 
+useful enough dynamic to inform our understanding 
+of it.
 
-Following that, make function that subsets by state, and then groups
+
+First, make function that subsets by state, and then groups
 by political party, and then returns the share of Democrats
 that are some kind of Conservative, and the share of Republicans that are some kind of Liberal.
 ```{python}
@@ -542,18 +576,13 @@ def find_share(df, state):
         sub["Party_Count"] = Party_Count
         sub["Outliers"] = Outlier_box
         return sub
-        
-Z = find_share(sub_polarization, "IL")                     
-
-IL_Group = Z.groupby("Party_Affiliation_(V201228)")[["Outliers", "Party_Count"]].sum().reset_index()
-
-IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count"])
-
 
 ```
 
+Attribution: Asked ChatGPT for help troubleshooting the for loops, the main fix was syntactic, mainly the indexing
+in the if and elif statements. 
 
-Make bigger function to hold everything together
+Then make bigger function to hold everything together
 ```{python}
 
 def seek_polar(df, state):
@@ -567,8 +596,6 @@ def seek_polar(df, state):
 
 #Example with IL
 seek_polar(sub_polarization, "IL")
-
-
 
 
 ```
@@ -618,7 +645,7 @@ def find_share_state(df, state):
 
 ```
 
-Make bigger function to produce results by each state by subsetting for a given state
+Then make bigger function to produce results by each state by subsetting for a given state
 ```{python}
 
 def seek_polar(df, state):
@@ -685,33 +712,43 @@ def polar_table(df):
 
 ```
 
-Save to a dataframe
+Save to a dataframe and produce graphs of both the count of outliers by state, and the percentage of outliers
+as a share of total population that identifies as Republican or Democrat.
 ```{python}
 polar_by_party = polar_table(sub_polarization)
 
 #graphing percentages
 percent_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
-    alt.X("US State 2", title = "State"),
+    alt.X("US State 2", title = "State", sort = "-y"),
     alt.Y("Percent_Outliers", title = "Outlier Share"),
     alt.Color("US State 2")
 )
 
+percent_graph_outliers.show()
+percent_graph_outliers.save("./data/percent_graph_outliers.png")
+
 #graphing sums
 sum_graph_outliers = alt.Chart(polar_by_party).mark_bar().encode(
-    alt.X("US State 2", title = "State"),
+    alt.X("US State 2", title = "State", sort = "-y"),
     alt.Y("Outliers", title = "Outlier Sum"),
     alt.Color("US State 2")
 )
 
+sum_graph_outliers.show()
+sum_graph_outliers.save("./data/sum_graph_outliers.png")
+
 ```
 
-In a paper on quantifying polarization written by Aaron Bramson et al (
-    https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization
+Now, on to the second measure of polarization.
+
+In a paper on quantifying polarization written by Aaron Bramson et al 
+(https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization
 indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion. 
 It's essentially the 
 gap between the most extreme political positions.
 In the paper, Bramson and colleagues explain:
-"Polarization in the sense of spread can be measured as the value of the agent with the highest belief value minus the value of the agent with the lowest belief value (sometimes called the ‘range’ of the data).""
+"Polarization in the sense of spread can be measured as the value of the agent with the highest belief value 
+minus the value of the agent with the lowest belief value (sometimes called the ‘range’ of the data)."
 
 We (imperfectly) approximate this using two more variables:
 V201206 and V201207. 
@@ -858,8 +895,14 @@ pivot_position = pivot_position.rename(
     )
 ```
 
+Attribution: I utilized this article 
 https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
-Asked ChatGPT how to flatten a multi-index column
+to better understand the use of pivot, and then 
+Asked ChatGPT how to flatten a multi-index column when 
+my use of .pivot() produced a multi-dimensional column.
+Its answer involved the use of the list comprehension, 
+and I then renamed the resulting columns.
+
 
 Now, use those 4 columns to create the spread, meaning
 the absolute value of the difference betweeen:
@@ -884,9 +927,6 @@ pivot_position["Spread_Repub"] = abs(
 
 ```
 
-Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
-Asked ChatGPT how to flatten a multi-index column
-
 Now, graph those differences, we're going to interpret these 
 spreads as an indicator of polarization, acknowledging that 
 this is too simple an analysis to account for the full 
@@ -909,9 +949,6 @@ Republican_Party_Spread_Graph = alt.Chart(pivot_position).mark_bar().encode(
     title = "Spread of Views"),
     alt.Color("US State 2")
 ).properties(title = alt.TitleParams("Spread of Views on Republican Party Ideological Position"))
-
-
-
 
 
 ```
@@ -1007,6 +1044,11 @@ def engagement_spread_graph_R(df, column):
 
 ```
 
+Attribution: I asked ChatGPT how to modify the color gradiant,
+after also 
+reviewing Altair documentation on color usage. 
+https://altair-viz.github.io/user_guide/customization.html 
+
 List of static polarization spread graphs
 ```{python}
 #sample static table with 
@@ -1024,8 +1066,10 @@ Dem_Graph_Spread_1 = engagement_spread_graph_D(main_group, "political_engagement
 Dem_Graph_Spread_2 = engagement_spread_graph_D(main_group, "Hours_Spent_Volunteering")
 
 Dem_Graph_Spread_1.show()
+Dem_Graph_Spread_1.save("./data/Dem_Graph_Spread_1.png")
 
 Dem_Graph_Spread_2.show()
+Dem_Graph_Spread_2.save("./data/Dem_Graph_Spread_2.png")
 ```
 
 #sample static graphs on Repub position
@@ -1037,8 +1081,10 @@ Repub_Graph_Spread_1 = engagement_spread_graph_R(main_group, "political_engageme
 Repub_Graph_Spread_2 = engagement_spread_graph_R(main_group, "Hours_Spent_Volunteering")
 
 Repub_Graph_Spread_1.show() 
+Repub_Graph_Spread_1.save("./data/Repub_Graph_Spread_1.png")
 
 Repub_Graph_Spread_2.show()
+Repub_Graph_Spread_2.save("./data/Repub_Graph_Spread_2.png")
 ```
 
 
@@ -1087,6 +1133,7 @@ Ideological_Position_US = alt.Chart(local_filter).mark_bar().encode(
         ))
 
 Ideological_Position_US.show()
+Ideological_Position_US.save("./data/Ideological_Position_US.png")
 ```
 
 Note: We removed non-responses, likely creating a bias in the relative
@@ -1151,10 +1198,7 @@ Correlation_Graph = alt.Chart(main_group).mark_circle().encode(
     ))
 
 Correlation_Graph.show()
-
-
-
-
+Correlation_Graph.save("./data/Correlation_Graph.png")
 ```
 
 Note: We remove non-responses in the state graph.
