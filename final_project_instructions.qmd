@@ -1,30 +1,15 @@
 ---
-title: "30538 Final Project: Reproducible Research"
-author: "Peter Ganong and Maggie Shi" 
-date: "today"
+title: "30538 Final Project: Reproducible Research - Volunteerism, Engagement, and Polarization in the U.S."
+author: "Andrew White, Charles Huang, Justine Silverstein" 
+date: "December 7, 2024"
 format: pdf
 execute:
-  eval: false
   echo: false
 ---
 
-# Project Description and Instructions
-The goal of this project is to showcase your knowledge of Python by applying it to a research project about a policy topic you are interested in. You will be graded on coding, writeup, and an in-class presentation.
-
-You may work on this project alone, or in groups of up to three students. All groups must be formed declared in the Canvas proposal before any work is done - it is not possible to join one after. 
-
-It is required that you use GitHub, and we may use your past commits to understand your thought process for partial credit. If you working in a group, note that as we are grading we will be looking for multiple commits per individual throughout the project. The division of labor should be approximately evenly across both individuals. While we will lean toward giving the same grade for all group members, it is possible that individuals may receive different grades based on the commit history.
-
-If you choose to form a group, we recommend that you do so with other students in your section. You are allowed to have a group member from another section, but all group members must be available to attend all the group members' lecture sessions. If you are not present when your project is presented, you will not receive credit for the presentation.
-
-
-# Grading 
-## Coding (70%)
-The code for the project should have the following components:
 
 1. Data wrangling (25%)
-    * You must use a minimum of *two* datasets. 
-    * All processing of the data should be handled by your `.qmd` code, including all merging and reshaping. 
+
 
 ```{python}
 # General
@@ -44,46 +29,68 @@ from shiny import App, ui, render
 from us import states
 
 ```
+# Background
+
+This project began as a shared interest in trends behind volunteering rates in America, as two of our member (Justine and Charles) are AmeriCorps alumni.
+
+For the past few years, concerns about the American public's increasing rates of isolation, decreasing lack of civic engagement and faith in institutions, and greater rates of political polarization have been prominent in the news and media. Our personal experiences with AmeriCorps and volunteering have taught us that volunteering can be effective at reducing isolation, increasing civic engagement/community awareness, and decreasing negative polarization towards "the other side". However, is volunteering a legitimate part of a public policy solution to these issues, or is it just a red herring?
+
+Our research questions were: 
+1. What is the current state of volunteerism, political engagement and polarization in America? 
+2. What factors make people more likely to volunteer or be civically engaged?
+
+
+# Data Importing/Cleaning
+
+Our datasets for this project were:
+
+1. AmeriCorps CEV (Civic Engagement and Volunteering Supplement) for 2021
+2. U.S. Census Bureau Volunteering and Civic Life Supplement - September 2021
+3. ANES (American National Election Studies) Time Series Data, 2020
+
+#1 and #2 primarily contain respondent information about volunteering and measures of civic engagement, while #3 contains information on political affiliation and polarization.
+
+We are importing the data from the AmeriCorps and ANES websites. Because the datasets are over 100 MB, we include a Google Drive link here:
+
+https://drive.google.com/drive/folders/1PUTN2pyh78MLoK0RVtGnf1ZwiM1BAAuV?usp=sharing
 
 ```{python}
-#Importing the data - AmeriCorps 2021 CEV 
-#Source: https://data.americorps.gov/dataset/2021-CEV-Data-Current-Population-Survey-Civic-Enga/rgh8-g2uc/about_data
-#Will need to include google drive/dropbox link since > 300MB
 
-#cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
+#Google Drive link for data: https://drive.google.com/drive/folders/1PUTN2pyh78MLoK0RVtGnf1ZwiM1BAAuV?usp=sharing
 
-cev_2021_raw = pd.read_csv(
-    "C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241127.csv", encoding = 'utf-8'
-    )
 
-#vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
+cev_2021_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/2021_CEV__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241031.csv", encoding = 'utf-8')
 
-vcl_supplement_raw = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/sep21pub.csv")
+vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
 
+polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
 
 ```
-Most relevant variables to focus on:
+As there are over 400 variables in the CEV and VCL data, here are the most relevant variables we focused on:
 
 Frequency and Type of Volunteering:
 PES16: Did the respondent spend any time volunteering for any organization in the past 12 months?
 PES16D: Frequency of volunteering (e.g., basically every day, a few times a week).
 PTS16E: Approximate hours spent volunteering.
+
 Political Engagement:
 PES2: How often the respondent discussed political, societal, or local issues with friends or family.
 PES5: How often these discussions occurred with neighbors.
 PES13: Contact or visits to a public official to express opinions.
 PES14: Boycotting or buying products based on political values or business practices.
+
 Civic Participation and Group Membership:
 PES15: Belonging to groups, organizations, or associations in the past 12 months.
 Neighbor and Community Interaction:
 PES7: Participation in activities to improve their neighborhood or community.
 Voting Behavior:
 PES11: Whether the respondent voted in the last local elections.
+
 Social Media and News Consumption:
 PES9: Posting views about political, societal, or local issues on the internet or social media.
 PES10: Frequency of consuming news related to political or societal issues.
 
-Basic Demographics
+Basic Demographics:
 Age: PRTAGE (Person's age)
 Gender: PESEX (Sex of the respondent)
 Race/Ethnicity: PTDTRACE (Detailed race and Hispanic origin)
@@ -97,9 +104,7 @@ Urban/Rural Status: GTMETSTA (Metropolitan or non-metropolitan status)
 Community Involvement: PES7 (Participation in neighborhood or community activities)
 Social Media Use: PES9 (Posting views about political, societal, or local issues on the internet or social media)
 
-This code will filter out the 400+ variables in the dataset to only the relevant ones.
 
-First we need to merge the two datasets:
 
 ```{python}
 vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
@@ -127,7 +132,6 @@ cev_all_2021.head(5)
 ```{python}
 from config import selected_variables, rename_mapping
 
-
 # selected_variables = ['hrhhid', 'hrhhid2', etc.]
 # This chooses the variables we want from the merged raw data
 
@@ -145,33 +149,9 @@ cev_all_2021_filter = cev_all_2021_filter.loc[:, ~cev_all_2021_filter.columns.du
 ```
 
 
-The data is a mix of numeric code and qualitative input, so we need to keep the qualitative input while mapping only numeric codes. The qualitative input is outside of the data dictionary, so it won't get picked up by any mapping functions and will be transmuted into NaN data. We will make a function that identifies all the values in the data that aren't picked up by our data dictionaries in config.py.
+One data cleaning issue we encountered with the CEV/VCL data: the data is a mix of numeric code and qualitative input. We can create a mapping function to swap the numeric codes with qualitative input, but the existing qualitative input is outside of the data dictionary, so it won't get picked up by any mapping functions and will be transmuted into NaN data. We made a function that identifies all the values in the data that aren't picked up by our data dictionaries- this function is located in our config.py file.
 
-For example, here's a sample from config.py:
-
-Renaming pes16 - Volunteered Past Year
-In the past 12 months, did [you/[NAME]] spend any time volunteering for any organization or association?
-
-pes16_dict = {
-    '1': 'Yes',
-    '2': 'No',
-    '-1': 'Not in Universe',
-    '-3': 'Refusal',
-    '-2': 'Do Not Know',
-    '-9': 'No Answer',
-    '.u': 'No Answer',
-    '.r': 'Refusal',
-    '.n': 'Not in Universe',
-    '.d': 'Do Not Know'
-}
-
-If there are some entries in this column that are already coded "Yes" or "No", our existing mapping won't account for them and will turn them into NANs. That's not desirable. We want to catch those and account for them.
-
-```{python}
-#For testing purposes, delete later
-cev_pre_clean_test = cev_all_2021_filter.copy()
-
-```
+For example, if there are some entries in a column that are already coded "Yes" or "No" in addition to "-1", "1", "2", etc. our existing mapping won't account for them and will turn them into NANs. We want to catch those and account for them.
 
 ```{python}
 
@@ -276,6 +256,32 @@ cev_all_2021_filter['Education_Level'] = cev_all_2021_filter['Education_Level'].
 cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Status'].map(
     gtmetsta_dict)
 
+```
+
+# Measuring Political Engagement
+
+As part of our analysis, we gauged volunteerism by referring to the question “Did you volunteer in the last 12 months”? However, there isn’t a single “civic/political engagement” question in the CEV/VCL data, but rather several different questions that are related.
+We chose five of the most relevant questions and weighted each based on their level of effort:
+
+
+1. “How frequently do you talk to a family member/neighbor about politics?” (15%)
+2. “How frequently do you post political views on social media?” (15%)
+3. “How frequently do you consume political news/media?” (10%)
+4. “Did you contact an elected official to express your opinion in the last 12 months?” (30%) 
+5. “Did you boycott a company based on their values in the last 12 months?” (30%)
+
+
+This generated a score from 0 - 100 that we could use as a (imperfect) proxy for political engagement. We mutated a new variable, political_engagement_score, to measure this and added it to our dataset.
+
+
+(Important caveat: For the political engagement questions, less than 20% of respondents answered three or more of the selected questions. To ensure meaningful data, we excluded all respondents who did not meet this threshold. While this approach improves the consistency of the dataset, we should be aware of potential selection bias.)
+
+
+```{python}
+
+
+##Note: The below debugging code was suggested by ChatGPT to deal with some column value errors caused by political_engagement_score mutation. We weren't sure how to fix the errors without taking out the debugging code.
+
 # Debugging code - Before engagement score calculation
 print("Columns before adding engagement score:")
 print(cev_all_2021_filter.columns.tolist())
@@ -284,7 +290,6 @@ print("\nShape before:", cev_all_2021_filter.shape)
 
 # Mutate the engagement score variable we came up with in config.py
 cev_all_2021_filter = add_engagement_score(cev_all_2021_filter)
-
 
 # More debugging code
 print("\nColumns after adding engagement score:")
@@ -298,10 +303,14 @@ print("'political_engagement_score' exists:",
 print("'engagement_level' exists:",
       'engagement_level' in cev_all_2021_filter.columns)
 
+```
+
+```{python}
+
+#confirm this code exports the data into the 'data' folder into the repo
+
 
 # Lastly, export the cleaned data as a csv for plotting purposes
-
-
 shiny_data_path = Path("shiny-app/basic-app/data")
 
 # Create directory if it doesn't exist
@@ -324,31 +333,8 @@ print(f"Dataset saved to: {shiny_data_path / 'cev_2021_cleaned.csv'}")
 
 ```
 
-```{python}
-#For summary/debugging only
-print((cev_all_2021_filter["Volunteered_Past_Year"] == "Yes").sum())
-print(21482/255744)
-
-print(cev_all_2021_filter['political_engagement_score'].mean())
-```
-
-```{python}
 
 
-```
-
-# American National Election Studies Data
-
-Link: https://electionstudies.org/data-center/2020-time-series-study/
-
-Citation for ANES:  American National Election Studies. 2021. ANES 2020 Time Series 
-Study Full Release [dataset and documentation]. July 19, 2021 
-version. www.electionstudies.org 
-
-Read in data from American National Election Studies
-```{python}
-polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
-```
 
 # Important elements of the ANES Codebook
 
