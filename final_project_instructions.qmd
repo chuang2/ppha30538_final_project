@@ -659,6 +659,7 @@ chart.save('boxplot_news_consumption_vs_volunteering_hours.png', format='png')
 ```
 
 # preparing some data, to list the average number of hours volunteered by state
+The above was used as exploratory code to analyze the data, especially to see how variables like news consumption and volunteering frequency interacted with each other. Also, we wanted to see how the correlation lookked in comparison to each other, such as voting frequency with if one voted or if one boycotted. The below code uses the US State variable to figure out if there is a correlation between how many volunteers come from a given state and how many hours they volunteered. From what we saw, there did not seem to be a strong correlation between state and hours volunteered. The number of volunteers from a given state was more reflective of population size than any kknd of potential ideology.
 ```{python}
 filtered_data = volunteering_frequencies[
     (volunteering_frequencies['Hours_Spent_Volunteering'].notna()) & 
