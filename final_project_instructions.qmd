@@ -1189,62 +1189,39 @@ Ideological_Position_IL = ideology_by_state(sub_polarization, "IL")
 Correlation between volunteer hours and political engagement
 ```{python}
 
-#Attribution: Asked ChatGPT how to add a regression line with slope calculation to the chart. ChatGPT suggested using linregress from scipy.stats package and provided assistance with the syntax
+# Attribution: Asked ChatGPT how to add a regression line to the chart. ChatGPT suggested using transform_regression() function
 
-import numpy as np
-from scipy.stats import linregress
-
-# Calculate regression line parameters
-slope, intercept, r_value, p_value, std_err = linregress(
-    main_group["Hours_Spent_Volunteering"],
-    main_group["political_engagement_score"]
-)
-
-# Format the slope for display
-slope_text = f"Slope: {slope:.2f}"
-
-# Create the regression line
+# Add regression line to the chart
 Regression_Graph = alt.Chart(main_group).transform_regression(
     "Hours_Spent_Volunteering", "political_engagement_score", method="linear"
 ).mark_line(color="red").encode(
     alt.X("Hours_Spent_Volunteering", title="Average Volunteer Hours"),
-    alt.Y("political_engagement_score", title="Average Political Engagement Score")
+    alt.Y("political_engagement_score",
+          title="Average Political Engagement Score")
 )
 
-# Create the scatter plot
-Correlation_Graph = alt.Chart(main_group).mark_circle(size=100).encode(
-    alt.X("Hours_Spent_Volunteering", title="Average Volunteer Hours"),
-    alt.Y("political_engagement_score", title="Average Political Engagement Score"),
-    alt.Color("US State 2", title="State"),
-    tooltip=["US State 2", "Hours_Spent_Volunteering", "political_engagement_score"]
-)
-
-# Add slope annotation
-Slope_Annotation = alt.Chart(pd.DataFrame({"x": [main_group["Hours_Spent_Volunteering"].max()], "y": [main_group["political_engagement_score"].max()]})).mark_text(
-    align="left", dx=-10, dy=10, color="black"
-).encode(
-    x="x:Q",
-    y="y:Q",
-    text=alt.value(slope_text)  # Display the slope as text
-)
-
-# Combine the scatter plot, regression line, and annotation
+# Combine scatter plot with regression line
 Correlation_Graph_With_Regression = alt.layer(
-    Correlation_Graph,  # Scatter plot
-    Regression_Graph,   # Regression line
-    Slope_Annotation    # Slope annotation
+    Correlation_Graph,  # Original scatter plot
+    Regression_Graph    # Regression line
 ).properties(
-    title="Correlation between Volunteer Hours and Political Engagement with Regression and Slope",
-    width=600,
-    height=400
+    title="Correlation between Volunteer Hours and Political Engagement with Regression"
 )
 
-# Show the combined chart
+# Show the combined graph
 Correlation_Graph_With_Regression.show()
+
 
 
 ```
 Correlation between volunteer hours and political polarization
+
+```{python}
+print(filtered_main_group["Hours_Spent_Volunteering"].dtype)
+print(filtered_main_group["political_engagement_score"].dtype)
+
+
+```
 
 
 ```{python}
