@@ -380,8 +380,8 @@ print("'engagement_level' exists:",
 
 ```{python}
 
-#confirm this code exports the data into the 'data' folder into the repo
-
+# confirm this code exports the data into the 'data' folder into the repo
+from pathlib import Path
 
 # Lastly, export the cleaned data as a csv for plotting purposes
 shiny_data_path = Path("shiny-app/basic-app/data")
@@ -876,19 +876,19 @@ pivot_position = pivot_position.rename(
 (2) The position Liberals give Republicans on the spectrum and the position Conservatives give Republicans on the spectrum
 '''
 
-#Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
-#Asked ChatGPT how to flatten a multi-index column
+# Attribution: Used this article: https://www.w3resource.com/pandas/dataframe/dataframe-pivot.php
+# Asked ChatGPT how to flatten a multi-index column
 
-#capture spread variables
+# capture spread variables
 pivot_position["Spread_Dem"] = abs(
-    pivot_position["Dem_Position_C"] - 
+    pivot_position["Dem_Position_C"] -
     pivot_position["Dem_Position_L"]
-    )
+)
 
 pivot_position["Spread_Repub"] = abs(
-    pivot_position["Repub_Position_C"] - 
+    pivot_position["Repub_Position_C"] -
     pivot_position["Repub_Position_L"]
-    )
+)
 
 ```
 
