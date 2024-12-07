@@ -410,7 +410,6 @@ sub_polarization["Observations"] = 1
 
 # More Data Cleaning
 
-
 Analyzing Question V201200, which is a question asking:
 
 "Where would you place yourself on this scale, or haven’t you
@@ -450,10 +449,12 @@ Make dataframe where all data is aggregated by state, and then
 we can show correlation between measure of polarity and 
 the share of respondents in a state who did volunteer work.
 
-Clean data to produce some geographic information. Note that we have two US State variables, with only
+Clean data to produce some geographic information. Note that we previously used two ANES variables as US State variables, 
+with only
 "US State 2" being used in analysis, purely because it has more in-universe entries. This appears to 
 be partially due to respondent reactions to different questions, and partially due to information 
-restrictions on the dataset.
+restrictions on the dataset. As such, "US State", is only used 
+for CEV data. 
 
 V201013a
 ```{python}
@@ -462,10 +463,6 @@ from us import states
 
 fips_to_state = {int(state.fips): state.abbr for state in states.STATES}
 
-sub_polarization['US State'] = pd.to_numeric(sub_polarization['V201013a'], errors='coerce')
-
-sub_polarization['US State'] = sub_polarization['US State'].map(fips_to_state)
-
 sub_polarization["US State 2"] = pd.to_numeric(sub_polarization['V201014b'], errors='coerce')
 
 sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_state)
@@ -473,28 +470,7 @@ sub_polarization['US State 2'] = sub_polarization['US State 2'].map(fips_to_stat
 
 ```
 
-Then, make data using V201018, which asks:  What political party are you registered with, if any?
-
--9. Refused -8. Don’t know -1. Inapplicable 
-1 Democratic party 
-2 Republican party
- 4  None or ‘independent’ 
-5 Other {SPECIFY}
-
-```{python}
-crosswalk_party = pd.DataFrame({
-    "Party_Numbers_(V201018)":[-9, -8, -1, 1, 2, 4, 5],
-    "Party_Affiliation_(V201018)":[
-        "Refused", "Don't know", "Inapplicable", "Democratic party",
-        "Republican party", "None or independent", "Other"
-        ]})
-
-sub_polarization = sub_polarization.merge(crosswalk_party, left_on = "V201018", right_on = "Party_Numbers_(V201018)")
-
-```
-
-Going to switch to a different marker for political party due to some challenges with V201018
-Now using: V201228, which asks:
+Then, make data using V201228, which asks:
 
 "Generally speaking, do you usually think of yourself as [a
 Democrat, a Republican / a Republican, a Democrat], an
@@ -522,13 +498,19 @@ sub_polarization = sub_polarization.merge(crosswalk_party_2, left_on = "V201228"
 
 ```
 
+# Measures of Polarization
+
+We will use two measures of polarization; each provides some 
+amount of information that can be interpreted to 
+indicate polarization to a certain extent, though neither of which 
+are fully empirically sound. 
+
+The first we will call Share of Outliers. 
 
 Following that, make function that subsets by state, and then groups
 by political party, and then returns the share of Democrats
-that are some kind of Conservative, and the share of Republicans that are some kind of Liberal
+that are some kind of Conservative, and the share of Republicans that are some kind of Liberal.
 ```{python}
-
-
 def find_share(df, state):
         #subset by state
         sub = df[df["US State 2"] == state]
@@ -566,7 +548,6 @@ Z = find_share(sub_polarization, "IL")
 IL_Group = Z.groupby("Party_Affiliation_(V201228)")[["Outliers", "Party_Count"]].sum().reset_index()
 
 IL_Group["Percent_Outliers"] =  IL_Group["Outliers"] / sum(IL_Group["Party_Count"])
-
 
 
 ```
@@ -728,12 +709,17 @@ In a paper on quantifying polarization written by Aaron Bramson et al (
     https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the authors examine a range of polarization
 indicators. A relatively simple (and in some ways problematic) measurement is called spread, or dispersion. 
 It's essentially the 
-gap between the most extreme political positions. We (imperfectly) approximate this using two more variables:
+gap between the most extreme political positions.
+In the paper, Bramson and colleagues explain:
+"Polarization in the sense of spread can be measured as the value of the agent with the highest belief value minus the value of the agent with the lowest belief value (sometimes called the ‘range’ of the data).""
+
+We (imperfectly) approximate this using two more variables:
 V201206 and V201207. 
 
 These ask respondents to position political parties on the political spectrum. We can select
 the most ideologically distant nodes on the personal ideology scale (extremely liberal and extremely conservative)
-and capture how far apart their conceptions of each party are, and then disaggregate by state.
+and capture how far apart their conceptions of each party are, 
+on average, and then disaggregate by state.
 
 We will assign the different ideological positions to 
 different points on a spectrum, namely:
@@ -973,10 +959,13 @@ main_group = group_cev.merge(
     pivot_position, left_on = "US State", right_on = "US State 2"
 )
 
+main_group.to_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/shiny-app-2/basic-app/main_group.csv")
 
 ```
 
-Function for selecting a function and viewing Political Engagement alongside spread
+Function for viewing Political Engagement alongside spread, one 
+generating a table with 2 states for comparison, and another 2 
+returning graphs
 ```{python}
 #return table
 def engagement_spread_table(df, state_1, state_2):
@@ -986,24 +975,31 @@ def engagement_spread_table(df, state_1, state_2):
         sub = sub.filter(["US State", "political_engagement_score", "Spread_Dem", "Spread_Repub"])
         return sub
 
-#return graph with Democratic positioning
-def engagement_spread_graph_D(df):
+#return graph with Democratic positioning 
+def engagement_spread_graph_D(df, column):
         graph = alt.Chart(df).mark_bar().encode(
-        alt.X("US State 2", title = "State"),
-        alt.Y("Spread_Dem", title = "Spread of Views"),
-        alt.Color("political_engagement_score"),
+        alt.X("US State 2", title = "State", sort = "-y"),
+        alt.Y("Spread_Dem", title = "Spread of Extreme Views"),
+         alt.Color(
+            column, 
+            scale = alt.Scale(range = ["lightblue", "darkblue"])
+            )
         ).properties(
             title = alt.TitleParams(
                 "Spread of Views on Democratic Party Ideological Position"
                 )
             )
         return graph
-#return graph with Republican positioning
-def engagement_spread_graph_R(df):    
+
+#return graph with Republican positioning 
+def engagement_spread_graph_R(df, column):    
         graph = alt.Chart(df).mark_bar().encode(
-        alt.X("US State 2", title = "State"),
-        alt.Y("Spread_Repub", title = "Spread of Views"),
-        alt.Color("political_engagement_score"),
+        alt.X("US State 2", title = "State", sort = "-y"),
+        alt.Y("Spread_Repub", title = "Spread of Extreme Views"),
+        alt.Color(
+            column, 
+            scale = alt.Scale(range = ["lightblue", "darkblue"]),
+            )
         ).properties(
             title = alt.TitleParams(
                 "Spread of Views on Republican Party Ideological Position"
@@ -1011,10 +1007,42 @@ def engagement_spread_graph_R(df):
             )
         return graph
 
-
-
-
 ```
+
+List of static polarization spread graphs
+```{python}
+#sample static table with 
+Sample_Table = engagement_spread_table(main_group, "IL", "OR")
+
+print(Sample_Table)
+```
+
+Sample static graphs on Dem position
+```{python}
+#using average political engagement
+Dem_Graph_Spread_1 = engagement_spread_graph_D(main_group, "political_engagement_score")
+
+#using average volunteer hours
+Dem_Graph_Spread_2 = engagement_spread_graph_D(main_group, "Hours_Spent_Volunteering")
+
+Dem_Graph_Spread_1.show()
+
+Dem_Graph_Spread_2.show()
+```
+
+#sample static graphs on Repub position
+```{python}
+#using average political engagement
+Repub_Graph_Spread_1 = engagement_spread_graph_R(main_group, "political_engagement_score")
+
+#using average volunteer hours
+Repub_Graph_Spread_2 = engagement_spread_graph_R(main_group, "Hours_Spent_Volunteering")
+
+Repub_Graph_Spread_1.show() 
+
+Repub_Graph_Spread_2.show()
+```
+
 
 2. Plotting (25%)
     * From that data, you will create a minimum of *two* static plots using `altair` or `geopandas`
@@ -1025,7 +1053,7 @@ def engagement_spread_graph_R(df):
 
 ```
 
-Exploratory graph of polarization
+Static graph of polarization nationally
 ```{python}
 alt.data_transformers.enable("vegafusion")
 #create list for graph to sort on 
@@ -1039,14 +1067,99 @@ sorting_list = [
         "Haven’t thought much about this"
     ]
 
-alt.Chart(sub_polarization).mark_bar().encode(
-    alt.X("Ideology_(V201200):N", sort = sorting_list),
-    alt.Y("Observations"),
-    alt.Color("Ideology_(V201200)")
-)
+#filter out non-responses
+global_non_response_list = [
+    "Haven’t thought much about this",
+    "Refused", "Don't Know"
+    ]
+
+local_filter = sub_polarization[
+    ~sub_polarization["Ideology_(V201200)"].isin(global_non_response_list)
+]
+
+Ideological_Position_US = alt.Chart(local_filter).mark_bar().encode(
+    alt.X(
+        "Ideology_(V201200):N", 
+        title = "Ideological Position",
+        sort = sorting_list),
+    alt.Y("Observations", title = "Number of Respondents"),
+    alt.Color("Ideology_(V201200)", sort = sorting_list)
+).properties(title = alt.TitleParams(
+            f"Ideological Position in the U.S."
+        ))
+
+Ideological_Position_US.show()
+```
+
+Note: We removed non-responses, likely creating a bias in the relative
+size of the remaining groups (it's difficult to predict the direction
+of said bias, however.)
+
+Static graph of ideological position by state
+```{python}
+
+def ideology_by_state(df, state):
+        #filter out non-responses
+        non_response_list = [
+            "Haven’t thought much about this", 
+            "Refused", "Don't Know"
+            ]
+        sub = df[
+            ~df["Ideology_(V201200)"].isin(non_response_list)
+            ]
+        #filter for the selected state
+        sub = sub[sub["US State 2"] == state]
+        #create list for graph to sort on 
+        sorting_list = [
+        "Extremely Liberal",
+        "Liberal", "Slightly Liberal", 
+        "Moderate; middle of the road",
+        "Slightly Conservative",
+        "Conservative",
+        "Extremely Conservative"
+        ]
+        graph = alt.Chart(sub).mark_bar().encode(
+            alt.X(
+                "Ideology_(V201200):N", 
+                title = "Ideological Position",
+                sort = sorting_list
+                ),
+            alt.Y("count():Q", title = "Number of Respondents"),
+            alt.Color("Ideology_(V201200):N", sort = sorting_list)
+        ).properties(title = alt.TitleParams(
+            f"Ideological Position in {state}"
+        ))
+        return graph
+
+#Example for Illinois
+Ideological_Position_IL = ideology_by_state(sub_polarization, "IL")
+
+```
+
+Correlation between volunteer hours and political engagement
+```{python}
+
+Correlation_Graph = alt.Chart(main_group).mark_circle().encode(
+    alt.X("Hours_Spent_Volunteering", title = "Average Volunteer Hours"),
+    alt.Y("political_engagement_score", title = "Average Political Engagement Score").scale(
+        domain=(
+            main_group["political_engagement_score"].min() - 3,
+            main_group["political_engagement_score"].max() + 3
+        )
+        ),
+    alt.Color("US State 2")
+).properties(title = alt.TitleParams(
+    "Correlation between volunteer hours and political engagement"
+    ))
+
+Correlation_Graph.show()
+
+
 
 
 ```
+
+Note: We remove non-responses in the state graph.
 
 4. Reproductibility (10%)
     * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see "Final Repository" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments
