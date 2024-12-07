@@ -959,8 +959,6 @@ main_group = group_cev.merge(
     pivot_position, left_on = "US State", right_on = "US State 2"
 )
 
-main_group.to_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/shiny-app-2/basic-app/main_group.csv")
-
 ```
 
 Function for viewing Political Engagement alongside spread, one 
