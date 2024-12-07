@@ -180,7 +180,7 @@ While volunteering can still be a solution to low civic engagement, and we can s
 # 7. Coding Analysis (Not Shown in Writeup)
 
 ```{python}
-vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()r
+vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
 
 cev_2021_raw = cev_2021_raw.astype(str)
 vcl_supplement_raw = vcl_supplement_raw.astype(str)
