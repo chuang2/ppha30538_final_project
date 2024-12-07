@@ -56,6 +56,7 @@ cev_2021_raw = pd.read_csv(
     "C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/2021_CEV_Data__Current_Population_Survey_Civic_Engagement_and_Volunteering_Supplement_20241127.csv", encoding = 'utf-8'
     )
 
+
 #vcl_supplement_raw = pd.read_csv("/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/sep21pub.csv")
 
 vcl_supplement_raw = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/sep21pub.csv")
@@ -102,6 +103,7 @@ This code will filter out the 400+ variables in the dataset to only the relevant
 First we need to merge the two datasets:
 
 ```{python}
+#note: this code chunk may take a couple minutes to run
 vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
 
 # I found out the data type is int64 for one df and object for the other
@@ -347,7 +349,10 @@ version. www.electionstudies.org
 
 Read in data from American National Election Studies
 ```{python}
-polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
+# polarization = pd.read_csv("C:/Users/andre/Documents/GitHub/ppha30538_final_project/data/anes_timeseries_2020_csv_20220210.csv")
+
+polarization = pd.read_csv(
+    "/Users/charleshuang/Documents/GitHub/student30538/problem_sets/final_project/data/anes_timeseries_2020_csv_20220210.csv")
 ```
 
 # Important elements of the ANES Codebook
@@ -1137,25 +1142,118 @@ Ideological_Position_IL = ideology_by_state(sub_polarization, "IL")
 Correlation between volunteer hours and political engagement
 ```{python}
 
-Correlation_Graph = alt.Chart(main_group).mark_circle().encode(
-    alt.X("Hours_Spent_Volunteering", title = "Average Volunteer Hours"),
-    alt.Y("political_engagement_score", title = "Average Political Engagement Score").scale(
-        domain=(
-            main_group["political_engagement_score"].min() - 3,
-            main_group["political_engagement_score"].max() + 3
-        )
-        ),
-    alt.Color("US State 2")
-).properties(title = alt.TitleParams(
-    "Correlation between volunteer hours and political engagement"
-    ))
+#Attribution: Asked ChatGPT how to add a regression line with slope calculation to the chart. ChatGPT suggested using linregress from scipy.stats package and provided assistance with the syntax
 
-Correlation_Graph.show()
+import numpy as np
+from scipy.stats import linregress
 
+# Calculate regression line parameters
+slope, intercept, r_value, p_value, std_err = linregress(
+    main_group["Hours_Spent_Volunteering"],
+    main_group["political_engagement_score"]
+)
 
+# Format the slope for display
+slope_text = f"Slope: {slope:.2f}"
+
+# Create the regression line
+Regression_Graph = alt.Chart(main_group).transform_regression(
+    "Hours_Spent_Volunteering", "political_engagement_score", method="linear"
+).mark_line(color="red").encode(
+    alt.X("Hours_Spent_Volunteering", title="Average Volunteer Hours"),
+    alt.Y("political_engagement_score", title="Average Political Engagement Score")
+)
+
+# Create the scatter plot
+Correlation_Graph = alt.Chart(main_group).mark_circle(size=100).encode(
+    alt.X("Hours_Spent_Volunteering", title="Average Volunteer Hours"),
+    alt.Y("political_engagement_score", title="Average Political Engagement Score"),
+    alt.Color("US State 2", title="State"),
+    tooltip=["US State 2", "Hours_Spent_Volunteering", "political_engagement_score"]
+)
+
+# Add slope annotation
+Slope_Annotation = alt.Chart(pd.DataFrame({"x": [main_group["Hours_Spent_Volunteering"].max()], "y": [main_group["political_engagement_score"].max()]})).mark_text(
+    align="left", dx=-10, dy=10, color="black"
+).encode(
+    x="x:Q",
+    y="y:Q",
+    text=alt.value(slope_text)  # Display the slope as text
+)
+
+# Combine the scatter plot, regression line, and annotation
+Correlation_Graph_With_Regression = alt.layer(
+    Correlation_Graph,  # Scatter plot
+    Regression_Graph,   # Regression line
+    Slope_Annotation    # Slope annotation
+).properties(
+    title="Correlation between Volunteer Hours and Political Engagement with Regression and Slope",
+    width=600,
+    height=400
+)
+
+# Show the combined chart
+Correlation_Graph_With_Regression.show()
 
 
 ```
+Correlation between volunteer hours and political polarization
+
+
+```{python}
+
+def plot_volunteerism_vs_polarization(df, volunteer_metric, polarization_metric, party="Dem"):
+    """
+    Plots the relationship between volunteerism and political polarization.
+    """
+    polarization_plot = alt.Chart(df).mark_circle(size=100).encode(
+        alt.X(volunteer_metric, title="Average Volunteer Hours"),
+        alt.Y(
+            polarization_metric,
+            title=f"Spread of Views on {
+                party} Party" if party else "Spread of Views",
+            # Optional: Avoid forcing the scale to start at 0
+            scale=alt.Scale(zero=False)
+        ),
+        alt.Color("US State:N", title="State"),
+        # Add tooltips for interactivity
+        tooltip=["US State", volunteer_metric, polarization_metric]
+    ).properties(
+        title=f"Volunteerism vs. Political Polarization ({party} Party)",
+        width=600,
+        height=400
+    )
+
+    return polarization_plot
+
+
+d_polar_plot = plot_volunteerism_vs_polarization(
+    df=main_group,
+    volunteer_metric="Hours_Spent_Volunteering",
+    polarization_metric="Spread_Dem",
+    party="Dem"
+)
+
+d_polar_plot.show()
+
+r_polar_plot = plot_volunteerism_vs_polarization(
+    df=main_group,
+    volunteer_metric="Hours_Spent_Volunteering",
+    polarization_metric="Spread_Repub",
+    party="Repub"
+)
+
+r_polar_plot.show()
+
+
+```
+
+```{python}
+
+main_group.columns
+```
+
+
 
 Note: We remove non-responses in the state graph.
 
