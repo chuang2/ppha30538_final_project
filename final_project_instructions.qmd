@@ -1102,8 +1102,6 @@ Correlation_Graph.show()
 
 This shows a noted positive correlation between volunteer hours and political engagement. However, as we'll see, this doesn't necessarily imply that increasing volunteering will lead to higher civic engagement.
 
-
-
 4. Reproductibility (10%)
     * The project and files should be structured and documented so that the TAs can clone your repository and reproduce your results (see "Final Repository" below) by knitting your `.qmd` and, if needed, downloading the dataset(s) you use using the link provided in the `.qmd` comments
 5. Git (10%)
