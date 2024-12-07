@@ -119,23 +119,68 @@ For example, if the average extremely liberal respondent in Texas places Democra
 
 Before discussing the data, we acknowledge we cannot discuss patterns over time as we only have data from 2021 in the case of the AmeriCorps and U.S. Census data, and 2020 in the case of the ANES data. However, the data is still useful as we can garner a lot from even a snapshot in time, especially as this was right after the height of the COVID pandemic and a highly contentious election. Furthermore (as noted in the shiny app), many entries were missing from the datasets due to nonresponse. As an example, over 80% respondents did not answer a majority of our political engagement questions, forcing us to exclude them from the analysis. While we believe our analyses still provide useful information, this potential selection bias should be taken into account.
 
-# 4a. Exploratory Analysis
+# 4a. Exploratory Analysis - Volunteering
+
+When initially working with the data, we generated multiple plots with different variables to see if we could notice any noteworthy trends between volunteering frequency and civic indicators such as public officials, boycotts, etc. (These charts are not shown here for space, but the output is included in our code.)
+
+As part of our exploratory analysis, we also ran a groupby on state-level data to see if there was any correlation between the number of volunteers per state and the average hours volunteered; however, there did not seem to be any correlation between the two.
+
+We want to highlight two charts out of the ones we produced. The first chart depicts the top and bottom five states by average hours spent volunteering:
+
+![Top 5 and Bottom 5 US States by average hours spent volunteering]('top_bottom_5_states_avg_volunteering.png')
+
+The second chart depicts volunteering frequency when measured against voters and nonvoters:
+
+![Volunteering Frequency for Voters and Non-Voters]('if_volunteered_last_year.png')
+
+An interesting point from our exploratory analysis is that in each volunteering category, the majority of people did vote in their local election. However, it is unclear if this is simply correlation, as AmeriCorps may disproportionately attract the kind of person already primed to vote in their local election and be politically engaged. We will engage this question of correlation further with our Shiny app results. 
 
 
+# 4b. Polarization Analysis
+
+With the ANES data, we focused more specifically on measuring political polarization, to try to examine our hypothesis that volunteering would correlate negatively with polarization. 
+
+As mentioned above, we devised a simple "spread" variable from Bramson et al. to measure polarization. We then graphed each state’s spread alongside average political engagement score and average volunteer hours. As an example, here is a graph of spread of views on Democrat Party ideological position, including volunteering hours: 
+
+![Spread of views on Democrat Party](dem_graph_spread_2.png)
+
+We found that these graphs do not appear to show a significant meaningful correlation between extreme views and volunteering in either Democrat or Republican analyses; we may have chosen some of the states with very high or very low spread, and it is clear that there is not much of a relationship, with high spread being found in some higher-volunteer states and some lower-volunteer states. 
+
+In the future, causal techniques such as regression analysis with controls for potential bias coming from variables such as income and education, or a difference-in-differences approach examining specific states over time, could better help to precisely measure polarization alongside political engagement.
 
 
-# 2a. i. CEV/VCL Data - Measuring Political Engagement
+# 5. Dynamic Plots in Shiny - Demographics vs. Volunteering Rate/Political Engagement
 
-As part of our analysis, we gauged volunteerism by referring to the question “Did you volunteer in the last 12 months”? However, for political engagement, 
+Building off of our exploratory analysis, we wanted to more easily see the correlations between volunteerism, political engagement, and potential confounders like income and education. We made a Shiny dashboard app using the CEV/VCL data that lets us see demographics (age, education level, income, US state, etc.) on the X-axis and the user's choice of volunteer rates or political engagement on the Y-axis. 
 
-(Important caveat: For the political engagement questions, less than 20% of respondents answered three or more of the selected questions. To ensure meaningful data, we excluded all respondents who did not meet this threshold. While this approach improves the consistency of the dataset, we should be aware of potential selection bias.)
+A screenshot of the app is here:
+![Shiny dashboard screenshot](shiny_screenshot.png)
+
+As an example, we can see here that volunteering is positively correlated with educational attainment, with over 25% of PhD/professional/master’s degree holders having volunteered in 2021.
+
+Using this app, we were able to find the most common traits associated with volunteering and civic engagement for 2021: family income and education, marital status, age, and being of White or Native American/Alaskan Indian heritage.
+
+We also found that women and rural inhabitants were slightly more likely to volunteer than men/urban inhabitants, but civic engagement remained the same. Additionally (but not surprisingly) social media was a negative predictor of volunteering, but not civic engagement. 
+
+This analysis reveals something critical about our hypothesis- while volunteering can still be a solution to low civic engagement, we can’t dismiss that both are simply correlated with other overarching demographic factors like income, education, and race, which makes sense as those factors can indicate well-off people having more resources and time to volunteer than others.
 
 
+# 6. Conclusion/Takeaways
+
+As mentioned before, our data and analysis has several disclaimers and caveats that we cannot fully account for. Nevertheless, our takeaways are here in order:
+
+1. Volunteers are more likely to vote than non-volunteers, but this is less likely to be a causation and more a correlation of demographic factors
+2. We did not find a meaningful correlation between volunteering and polarized attitudes; the evidence that volunteering in particular has a positive effect on polarization and engagement seems weak. 
+3. We found that predictors of volunteering and civic engagement are concentrated in disproportionately well-off, privileged populations.
+
+For organizations like AmeriCorps that want to attract younger or more diverse volunteers, as well as improving civic participation/engagement in general, this has important implications- organizations like those should consider that simple appeals to volunteer more, or attempts to diversify volunteer populations, may not mean much without additional incentives that can address the structural barriers of volunteering.
+
+While volunteering can still be a solution to low civic engagement, and we can speak personally to its interpersonal benefits, we can’t dismiss that both are simply correlated with other overarching demographic factors like income, education, and race. This should give us pause to the theory that volunteering is a neat solution to reducing polarization and improving civic engagement in and of itself, but future studies can examine specific populations of low-income or other "non-typical" volunteers that reported positive outcomes- perhaps volunteering itself has certain aspects (like community, sense of purpose, etc.) that can still be valuable regardless of socioeconomic status.
+
+# 7. Coding Analysis (Not Shown in Writeup)
 
 ```{python}
-vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()
-
-# I found out the data type is int64 for one df and object for the other
+vcl_supplement_raw.columns = vcl_supplement_raw.columns.str.lower()r
 
 cev_2021_raw = cev_2021_raw.astype(str)
 vcl_supplement_raw = vcl_supplement_raw.astype(str)
@@ -173,7 +218,6 @@ cev_all_2021_filter.rename(columns=rename_mapping, inplace=True)
 #Debugging: removing duplicate column(s)
 cev_all_2021_filter = cev_all_2021_filter.loc[:, ~cev_all_2021_filter.columns.duplicated()]
 ```
-
 
 
 ```{python}
@@ -281,9 +325,6 @@ cev_all_2021_filter['Urban_Rural_Status'] = cev_all_2021_filter['Urban_Rural_Sta
 
 ```
 
-# ANES data cleaning
-
-For the ANES data, we create
 
 ```{python}
 #list 1
@@ -383,7 +424,6 @@ List 2: This list is designed to capture variables covering information about as
 
 '''
 
-
 #list 1
 subset_list_1 = [column for column in polarization if "V2010" in column]
 
@@ -411,10 +451,6 @@ sub_polarization = polarization.filter(items= subset_list)
 #of entries
 sub_polarization["Observations"] = 1
 ```
-
-# ANES - More Data Cleaning
-
-
 
 ```{python}
 #Make variables more clear
@@ -770,7 +806,7 @@ sub_polarization = sub_polarization.drop(["Dem_Num_(V201206)", "Repub_Num_(V2012
 
 '''We use the Positioning columns to compare the average party position selections between the 2 extremes. '''
 
-Step 1: First grouping
+#Step 1: First grouping
 
 #filter out all self-identifiers that aren't "Extremely Liberal"
 #or Extremely Conservative
@@ -1022,8 +1058,10 @@ Dem_Graph_Spread_1 = engagement_spread_graph_D(main_group, "political_engagement
 Dem_Graph_Spread_2 = engagement_spread_graph_D(main_group, "Hours_Spent_Volunteering")
 
 Dem_Graph_Spread_1.show()
+Dem_Graph_Spread_1.save('dem_graph_spread.png', format='png')
 
 Dem_Graph_Spread_2.show()
+Dem_Graph_Spread_2.save('dem_graph_spread_2.png', format='png')
 ```
 
 
@@ -1035,8 +1073,12 @@ Repub_Graph_Spread_1 = engagement_spread_graph_R(main_group, "political_engageme
 Repub_Graph_Spread_2 = engagement_spread_graph_R(main_group, "Hours_Spent_Volunteering")
 
 Repub_Graph_Spread_1.show() 
+Repub_Graph_Spread_1.save('repub_graph_spread.png', format='png')
+
 
 Repub_Graph_Spread_2.show()
+Repub_Graph_Spread_2.save('repub_graph_spread_2.png', format='png')
+
 ```
 
 
@@ -1451,8 +1493,10 @@ chart.show()
 chart.save('top_bottom_5_states_avg_volunteering.png', format='png')
 ```
 
-# the following chart is total number of volunteers per state and stacked by volunteer frequency
+
 ```{python}
+
+# the following chart is total number of volunteers per state and stacked by volunteer frequency
 filtered_data = volunteering_frequencies.dropna(subset=['US State'])
 
 aggregated_data = filtered_data.groupby(['US State', 'Volunteering_Frequency']).size().reset_index(name='Count')
