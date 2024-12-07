@@ -14,3 +14,6 @@ scipy==1.11.3
 requests==2.31.0
 python-dotenv==1.0.0
 vl-convert-python==1.7.0
+us==2.0.2
+altair-saver==0.6.1
+vegafusion==0.9.1
