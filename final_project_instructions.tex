@@ -1,7 +1,6 @@
 % Options for packages loaded elsewhere
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{hyphens}{url}
-\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
   letterpaper,
@@ -145,11 +144,7 @@
 \hypersetup{
   pdftitle={30538 Final Project: Reproducible Research - Volunteerism, Engagement, and Polarization in the U.S.},
   pdfauthor={Andrew White, Charles Huang, Justine Silverstein},
-  colorlinks=true,
-  linkcolor={blue},
-  filecolor={Maroon},
-  citecolor={Blue},
-  urlcolor={Blue},
+  hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
 
@@ -192,8 +187,8 @@ Our datasets for this project were:
 \item
   AmeriCorps CEV (Civic Engagement and Volunteering Supplement) for 2021
 \item
-  U.S. Census Bureau Volunteering and Civic Life Supplement - September
-  2021
+  U.S. Census Bureau Volunteering and Civic Life (VCL) Supplement -
+  September 2021
 \item
   ANES (American National Election Studies) Time Series Data, 2020
 \end{enumerate}
@@ -207,89 +202,66 @@ the datasets are over 100 MB, we include a Google Drive link here:
 
 https://drive.google.com/drive/folders/1PUTN2pyh78MLoK0RVtGnf1ZwiM1BAAuV?usp=sharing
 
-\section{2a. Data cleaning - CEV/VCL
-data}\label{a.-data-cleaning---cevvcl-data}
+As there are over 400 variables in the CEV and VCL data, we focused on
+the 20 most relevant variables in the following categories:
 
-As there are over 400 variables in the CEV and VCL data, here are the
-most relevant variables we focused on:
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Frequency and Type of Volunteering
+\item
+  Political Engagement (did respondents discuss politics, did they write
+  to elected officials, boycott products, etc.)
+\item
+  Civic/Community Participation (did respondents belong to
+  groups/associations, interact with neighbors, etc.)
+\item
+  Basic demographics (age, gender, race, income, education, etc.)
+\end{enumerate}
 
-Frequency and Type of Volunteering: PES16: Did the respondent spend any
-time volunteering for any organization in the past 12 months? PES16D:
-Frequency of volunteering (e.g., basically every day, a few times a
-week). PTS16E: Approximate hours spent volunteering.
+Because the CEV and VCL data use similar variable names (by design), we
+were able to merge the two datasets together after cleaning the column
+names. Since the data values in the CEV/VCL data are entered in numeric
+codes (-1, 1, 2, etc.), we also created mapping functions with
+dictionaries to convert the data as needed.
 
-Political Engagement: PES2: How often the respondent discussed
-political, societal, or local issues with friends or family. PES5: How
-often these discussions occurred with neighbors. PES13: Contact or
-visits to a public official to express opinions. PES14: Boycotting or
-buying products based on political values or business practices.
-
-Civic Participation and Group Membership: PES15: Belonging to groups,
-organizations, or associations in the past 12 months. Neighbor and
-Community Interaction: PES7: Participation in activities to improve
-their neighborhood or community. Voting Behavior: PES11: Whether the
-respondent voted in the last local elections.
-
-Social Media and News Consumption: PES9: Posting views about political,
-societal, or local issues on the internet or social media. PES10:
-Frequency of consuming news related to political or societal issues.
-
-Basic Demographics: Age: PRTAGE (Person's age) Gender: PESEX (Sex of the
-respondent) Race/Ethnicity: PTDTRACE (Detailed race and Hispanic origin)
-Marital Status: PEMARITL (Marital status of the respondent) Household
-Composition: HRNUMHOU (Number of persons in the household)
-
-Potential Confounding Variables Income: HEFAMINC (Household family
-income level) Education: PEEDUCA (Highest level of school completed)
-Urban/Rural Status: GTMETSTA (Metropolitan or non-metropolitan status)
-Community Involvement: PES7 (Participation in neighborhood or community
-activities) Social Media Use: PES9 (Posting views about political,
-societal, or local issues on the internet or social media)
-
-\begin{longtable}[]{@{}llllllllllllllllllllll@{}}
-\toprule\noalign{}
-& hrhhid & hrmonth & hryear4 & hurespli & hufinal & hetenure & hehousut
-& hetelhhd & hetelavl & hephoneo & ... & pes17 & pes18 & prsupvol &
-pwnrwgt & peswp1a & peswp1b & peswp1c & peswp1d & peswp2 & pwsrwgt \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-0 & 333550513043249 & 9 & 2021 & -1 & 226 & 2 & 1 & 1 & -1 & 1 & ... &
--1 & -1 & -1 & 0 & -1 & -1 & -1 & -1 & -1 & 0 \\
-1 & 900419145210736 & 9 & 2021 & 2 & 225 & 2 & 1 & 1 & -1 & 1 & ... & -1
-& -1 & -1 & 0 & -1 & -1 & -1 & -1 & -1 & 0 \\
-2 & 206408571810641 & 9 & 2021 & 4 & 225 & 2 & 1 & 1 & -1 & 1 & ... & -1
-& -1 & -1 & 0 & -1 & -1 & -1 & -1 & -1 & 0 \\
-3 & 606110727510599 & 9 & 2021 & -1 & 225 & 1 & 1 & -1 & -1 & 1 & ... &
--1 & -1 & -1 & 0 & -1 & -1 & -1 & -1 & -1 & 0 \\
-4 & 848450067381002 & 9 & 2021 & -1 & 216 & -1 & 1 & -1 & -1 & 0 & ... &
--1 & -1 & -1 & 0 & -1 & -1 & -1 & -1 & -1 & 0 \\
-\end{longtable}
-
-One data cleaning issue we encountered with the CEV/VCL data: the data
-is a mix of numeric code and qualitative input. We can create a mapping
-function to swap the numeric codes with qualitative input, but the
-existing qualitative input is outside of the data dictionary, so it
-won't get picked up by any mapping functions and will be transmuted into
-NaN data. We made a function that identifies all the values in the data
+(One notable issue we encountered with cleaning the CEV/VCL data was a
+hetereogeneous mix of numeric code and qualitative input. We made an
+additional helper function that identifies all the values in the data
 that aren't picked up by our data dictionaries- this function is located
-in our config.py file.
+in our config.py file.)
 
-For example, if there are some entries in a column that are already
-coded ``Yes'' or ``No'' in addition to ``-1'', ``1'', ``2'', etc. our
-existing mapping won't account for them and will turn them into NANs. We
-want to catch those and account for them.
+\section{2b. Data cleaning - ANES
+data}\label{b.-data-cleaning---anes-data}
 
-\section{CEV/VCL Data - Measuring Political
-Engagement}\label{cevvcl-data---measuring-political-engagement}
+As with the CEV/VCL data, our goal was to subset the data so that it
+only contains relevant variables. We accomplished this by making two
+lists- one designed to capture variables covering geographic information
+(V201011, V201013a, V201013b, V201014a, V201014b), and one designed to
+capture variables covering information about assessments of political
+positioning (i.e.~left, right, center)
 
-As part of our analysis, we gauged volunteerism by referring to the
-question ``Did you volunteer in the last 12 months''? However, there
-isn't a single ``civic/political engagement'' question in the CEV/VCL
-data, but rather several different questions that are related. We chose
-five of the most relevant questions and weighted each based on their
-level of effort:
+Similarly, we also used a mapping function to change numerical codes to
+qualitative data in two relevant questions:
+
+V201200 - ``Where would you place yourself on this {[}extremely liberal
+to extremely conservative{]} scale, or haven't you thought much about
+this?''
+
+V201228 - ``Generally speaking, do you usually think of yourself as {[}a
+Democrat, a Republican / a Republican, a Democrat{]}, an independent, or
+something else?''
+
+\section{3. Custom Variables}\label{custom-variables}
+
+We devised two custom measures of political engagement and polarization
+derived from the survey results:
+
+I. Political Engagement Score
+
+We chose five of the most relevant questions from the CEV/VCL data and
+weighted each based on their level of effort:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -310,89 +282,222 @@ level of effort:
 \end{enumerate}
 
 This generated a score from 0 - 100 that we could use as a (imperfect)
-proxy for political engagement. We mutated a new variable,
-political\_engagement\_score, to measure this and added it to our
-dataset.
+proxy for political engagement. We mutated a new variable to measure
+this and added it to our dataset.
 
-(Important caveat: For the political engagement questions, less than
-20\% of respondents answered three or more of the selected questions. To
-ensure meaningful data, we excluded all respondents who did not meet
-this threshold. While this approach improves the consistency of the
-dataset, we should be aware of potential selection bias.)
+\begin{enumerate}
+\def\labelenumi{\Roman{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Polarization Score
+\end{enumerate}
 
-\section{ANES data cleaning}\label{anes-data-cleaning}
+In a paper on quantifying polarization written by Aaron Bramson et al
+(https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the
+authors examine a range of polarization indicators. A relatively simple
+(and in some ways problematic) measurement is called spread, or
+dispersion. Bramson et al.~explain: ``Polarization\ldots can be measured
+as the value of the agent with the highest belief value minus the value
+of the agent with the lowest belief value.''
 
-For the ANES data, we create
+We (imperfectly) approximate this using two more variables: V201206 and
+V201207. These ask respondents to position political parties on the
+political spectrum. We selected the most ideologically distant nodes on
+the personal ideology scale (extremely liberal and extremely
+conservative) and capture how far apart their conceptions of each party
+are, on average.
 
-\begin{verbatim}
-Columns before adding engagement score:
-['Household_ID', 'Household_ID_2', 'Volunteered_Past_Year', 'Volunteering_Frequency', 'Hours_Spent_Volunteering', 'Discussed_Issues_With_Friends_Family', 'Discussed_Issues_With_Neighbors', 'Contacted_Public_Official', 'Boycott_Based_On_Values', 'Belonged_To_Groups', 'Community_Improvement_Activities', 'Voted_In_Local_Election', 'Posted_Views_On_Social_Media', 'Frequency_Of_News_Consumption', 'Age', 'Gender', 'Race_Ethnicity', 'Marital_Status', 'Household_Size', 'US State', 'Family_Income_Level', 'Education_Level', 'Urban_Rural_Status']
+We created a scale to assign the different ideological positions on a
+spectrum, namely: -3, -2, and -1 are ``Extremely Liberal'', ``Liberal'',
+and ``Slightly Liberal''; 0 is ``Moderate; middle of the road''; 1, 2,
+and 3 are ``Slightly conservative'', ``Conservative'', and ``Extremely
+conservative.''
 
-Shape before: (255744, 23)
+For example, if the average extremely liberal respondent in Texas places
+Democrats at -1 (slightly liberal) and the average for the extremely
+conservative respondents is 3 (extremely conservative), then the
+distance between the two is 4, meaning Texas would have a spread of 4
+for this question.
 
-Columns after adding engagement score:
-['Household_ID', 'Household_ID_2', 'Volunteered_Past_Year', 'Volunteering_Frequency', 'Hours_Spent_Volunteering', 'Discussed_Issues_With_Friends_Family', 'Discussed_Issues_With_Neighbors', 'Contacted_Public_Official', 'Boycott_Based_On_Values', 'Belonged_To_Groups', 'Community_Improvement_Activities', 'Voted_In_Local_Election', 'Posted_Views_On_Social_Media', 'Frequency_Of_News_Consumption', 'Age', 'Gender', 'Race_Ethnicity', 'Marital_Status', 'Household_Size', 'US State', 'Family_Income_Level', 'Education_Level', 'Urban_Rural_Status', 'political_engagement_score', 'engagement_level']
+\section{4. Static Plots and Outcomes}\label{static-plots-and-outcomes}
 
-Shape after: (255744, 25)
+\section{Caveats}\label{caveats}
 
-Verifying engagement score columns exist:
-'political_engagement_score' exists: True
-'engagement_level' exists: True
-\end{verbatim}
+Before discussing the data, we acknowledge we cannot discuss patterns
+over time as we only have data from 2021 in the case of the AmeriCorps
+and U.S. Census data, and 2020 in the case of the ANES data. However,
+the data is still useful as we can garner a lot from even a snapshot in
+time, especially as this was right after the height of the COVID
+pandemic and a highly contentious election. Furthermore (as noted in the
+shiny app), many entries were missing from the datasets due to
+nonresponse. As an example, over 80\% respondents did not answer a
+majority of our political engagement questions, forcing us to exclude
+them from the analysis. While we believe our analyses still provide
+useful information, this potential selection bias should be taken into
+account.
 
-\begin{verbatim}
+\section{4a. Exploratory Analysis -
+Volunteering}\label{a.-exploratory-analysis---volunteering}
 
-Columns in saved CSV:
-['Household_ID', 'Household_ID_2', 'Volunteered_Past_Year', 'Volunteering_Frequency', 'Hours_Spent_Volunteering', 'Discussed_Issues_With_Friends_Family', 'Discussed_Issues_With_Neighbors', 'Contacted_Public_Official', 'Boycott_Based_On_Values', 'Belonged_To_Groups', 'Community_Improvement_Activities', 'Voted_In_Local_Election', 'Posted_Views_On_Social_Media', 'Frequency_Of_News_Consumption', 'Age', 'Gender', 'Race_Ethnicity', 'Marital_Status', 'Household_Size', 'US State', 'Family_Income_Level', 'Education_Level', 'Urban_Rural_Status', 'political_engagement_score', 'engagement_level']
-Dataset saved to: shiny-app/basic-app/data/cev_2021_cleaned.csv
-\end{verbatim}
+When initially working with the data, we generated multiple plots with
+different variables to see if we could notice any noteworthy trends
+between volunteering frequency and civic indicators such as public
+officials, boycotts, etc. (These charts are not shown here for space,
+but the output is included in our code.)
 
-\section{Data Cleaning - ANES Data}\label{data-cleaning---anes-data}
+As part of our exploratory analysis, we also ran a groupby on
+state-level data to see if there was any correlation between the number
+of volunteers per state and the average hours volunteered; however,
+there did not seem to be any correlation between the two.
 
-As with the CEV/VCL data, our goal was to subset the data so that it
-only contains relevant variables. We accomplish this by making two
-lists:
+We want to highlight two charts out of the ones we produced. The first
+chart depicts the top and bottom five states by average hours spent
+volunteering:
 
-List 1: This list is designed to capture variables covering geographic
-information (V201011, V201013a, V201013b, V201014a, V201014b)
+\begin{figure}[H]
 
-List 2: This list is designed to capture variables covering information
-about assessments of political positioning (i.e.~left, right, center)
+{\centering \includegraphics{top_bottom_5_states_avg_volunteering.png}
 
-\section{ANES - More Data Cleaning}\label{anes---more-data-cleaning}
+}
 
-Analyzing Question V201200, which is a question asking:
+\caption{Top 5 and Bottom 5 US States by average hours spent
+volunteering}
 
-``Where would you place yourself on this scale, or haven't you thought
-much about this? Value Labels-9. Refused -8. Don't know 1. Extremely
-Liberal 2. Liberal 3. Slightly Liberal 4. Moderate; middle of the road
-5. Slightly Conservative 6. Conservative 7. Extremely Conservative 99.
-Haven't thought much about this''
+\end{figure}%
 
-We use this data to make a dataframe aggregated by state, and then we
-can show correlation between measure of polarity and the share of
-respondents in a state who did volunteer work.
+The second chart depicts volunteering frequency when measured against
+voters and nonvoters:
 
-Note that we previously used two ANES variables as US State variables,
-with only ``US State 2'' being used in analysis, purely because it has
-more in-universe entries. This appears to be partially due to respondent
-reactions to different questions, and partially due to information
-restrictions on the dataset. As such, ``US State'' is only used for CEV
-data.
+\begin{figure}[H]
 
-Then, make data using V201228, which asks:
+{\centering \includegraphics{if_volunteered_last_year.png}
 
-``Generally speaking, do you usually think of yourself as {[}a Democrat,
-a Republican / a Republican, a Democrat{]}, an independent, or what?''
+}
 
--9. Refused -8. Don't know -4. Technical error 0. No preference \{VOL -
-video/phone only\} 1. Democrat 2. Republican 3. Independent 5. Other
-party \{SPECIFY\}
+\caption{Volunteering Frequency for Voters and Non-Voters}
 
-\section{2. Exploratory Analysis}\label{exploratory-analysis}
+\end{figure}%
 
-\section{2a. Measures of
-Polarization}\label{a.-measures-of-polarization}
+An interesting point from our exploratory analysis is that in each
+volunteering category, the majority of people did vote in their local
+election. However, it is unclear if this is simply correlation, as
+AmeriCorps may disproportionately attract the kind of person already
+primed to vote in their local election and be politically engaged. We
+will engage this question of correlation further with our Shiny app
+results.
+
+\section{4b. Polarization Analysis}\label{b.-polarization-analysis}
+
+With the ANES data, we focused more specifically on measuring political
+polarization, to try to examine our hypothesis that volunteering would
+correlate negatively with polarization.
+
+As mentioned above, we devised a simple ``spread'' variable from Bramson
+et al.~to measure polarization. We then graphed each state's spread
+alongside average political engagement score and average volunteer
+hours. As an example, here is a graph of spread of views on Democrat
+Party ideological position, including volunteering hours:
+
+\begin{figure}[H]
+
+{\centering \includegraphics{dem_graph_spread_2.png}
+
+}
+
+\caption{Spread of views on Democrat Party}
+
+\end{figure}%
+
+We found that these graphs do not appear to show a significant
+meaningful correlation between extreme views and volunteering in either
+Democrat or Republican analyses; we may have chosen some of the states
+with very high or very low spread, and it is clear that there is not
+much of a relationship, with high spread being found in some
+higher-volunteer states and some lower-volunteer states.
+
+In the future, causal techniques such as regression analysis with
+controls for potential bias coming from variables such as income and
+education, or a difference-in-differences approach examining specific
+states over time, could better help to precisely measure polarization
+alongside political engagement.
+
+\section{5. Dynamic Plots in Shiny - Demographics vs.~Volunteering
+Rate/Political
+Engagement}\label{dynamic-plots-in-shiny---demographics-vs.-volunteering-ratepolitical-engagement}
+
+Building off of our exploratory analysis, we wanted to more easily see
+the correlations between volunteerism, political engagement, and
+potential confounders like income and education. We made a Shiny
+dashboard app using the CEV/VCL data that lets us see demographics (age,
+education level, income, US state, etc.) on the X-axis and the user's
+choice of volunteer rates or political engagement on the Y-axis.
+
+A screenshot of the app is here: \includegraphics{shiny_screenshot.png}
+
+As an example, we can see here that volunteering is positively
+correlated with educational attainment, with over 25\% of
+PhD/professional/master's degree holders having volunteered in 2021.
+
+Using this app, we were able to find the most common traits associated
+with volunteering and civic engagement for 2021: family income and
+education, marital status, age, and being of White or Native
+American/Alaskan Indian heritage.
+
+We also found that women and rural inhabitants were slightly more likely
+to volunteer than men/urban inhabitants, but civic engagement remained
+the same. Additionally (but not surprisingly) social media was a
+negative predictor of volunteering, but not civic engagement.
+
+This analysis reveals something critical about our hypothesis- while
+volunteering can still be a solution to low civic engagement, we can't
+dismiss that both are simply correlated with other overarching
+demographic factors like income, education, and race, which makes sense
+as those factors can indicate well-off people having more resources and
+time to volunteer than others.
+
+\section{6. Conclusion/Takeaways}\label{conclusiontakeaways}
+
+As mentioned before, our data and analysis has several disclaimers and
+caveats that we cannot fully account for. Nevertheless, our takeaways
+are here in order:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Volunteers are more likely to vote than non-volunteers, but this is
+  less likely to be a causation and more a correlation of demographic
+  factors
+\item
+  We did not find a meaningful correlation between volunteering and
+  polarized attitudes; the evidence that volunteering in particular has
+  a positive effect on polarization and engagement seems weak.
+\item
+  We found that predictors of volunteering and civic engagement are
+  concentrated in disproportionately well-off, privileged populations.
+\end{enumerate}
+
+For organizations like AmeriCorps that want to attract younger or more
+diverse volunteers, as well as improving civic participation/engagement
+in general, this has important implications- organizations like those
+should consider that simple appeals to volunteer more, or attempts to
+diversify volunteer populations, may not mean much without additional
+incentives that can address the structural barriers of volunteering.
+
+While volunteering can still be a solution to low civic engagement, and
+we can speak personally to its interpersonal benefits, we can't dismiss
+that both are simply correlated with other overarching demographic
+factors like income, education, and race. This should give us pause to
+the theory that volunteering is a neat solution to reducing polarization
+and improving civic engagement in and of itself, but future studies can
+examine specific populations of low-income or other ``non-typical''
+volunteers that reported positive outcomes- perhaps volunteering itself
+has certain aspects (like community, sense of purpose, etc.) that can
+still be valuable regardless of socioeconomic status.
+
+\section{7. Coding Analysis (Not Shown in
+Writeup)}\label{coding-analysis-not-shown-in-writeup}
 
 We will use two measures of polarization from the ANES data; each
 provides some amount of information that can be interpreted to indicate
@@ -407,541 +512,12 @@ polarization to a certain extent, though both have their drawbacks.
   and Republicans with liberal-leaning ones.
 \end{enumerate}
 
-\begin{longtable}[]{@{}lllll@{}}
-\toprule\noalign{}
-& Party\_Affiliation\_(V201228) & Outliers & Party\_Count &
-Percent\_Outliers \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-0 & Democrat & 0 & 137 & 0.0000 \\
-1 & Independent & 0 & 0 & 0.0000 \\
-2 & Other party & 0 & 0 & 0.0000 \\
-3 & Refused & 0 & 0 & 0.0000 \\
-4 & Republican & 4 & 84 & 0.0181 \\
-\end{longtable}
-
-In a paper on quantifying polarization written by Aaron Bramson et al
-(https://inferenceproject.yale.edu/sites/default/files/688938.pdf), the
-authors examine a range of polarization indicators. A relatively simple
-(and in some ways problematic) measurement is called spread, or
-dispersion- essentially the gap between the most extreme political
-positions.
-
-In the paper, Bramson et al.~explain: ``Polarization in the sense of
-spread can be measured as the value of the agent with the highest belief
-value minus the value of the agent with the lowest belief value
-(sometimes called the `range' of the data).''\,''
-
-We (imperfectly) approximate this using two more variables: V201206 and
-V201207. These ask respondents to position political parties on the
-political spectrum. We can select the most ideologically distant nodes
-on the personal ideology scale (extremely liberal and extremely
-conservative) and capture how far apart their conceptions of each party
-are, on average, and then disaggregate by state.
-
-We will assign the different ideological positions to different points
-on a spectrum, namely: -3, -2, and -1 are ``Extremely Liberal'',
-``Liberal'', and ``Slightly Liberal'';
-
-and: 0 is ``Moderate; middle of the road'';
-
-finally, 1, 2, and 3 are ``Slightly conservative'', ``Conservative'' and
-``Extremely conservative.''\,''
-
-We'll then compare average positions by state. For example, if the
-average extremely liberal respondent in Texas places Democrats at at -1
-(slightly liberal) and the average for the extremely conservative
-respondents in -3 (extremely liberal), then the distance between the two
-is 4, meaning Texas would have a spread of 4 for this question.
-
-We create the crosswalks V201206 and V201207 -
-
-We use the Positioning columns to compare the average party position
-selections between the 2 extremes.
-
-Step 1: First grouping
-
-Step 2: We use the variable position\_groups to create a dataframe that
-has 4 columns: (1) The position Liberals give Democrats on the spectrum
-(2) the position Conservatives give Democrats on the spectrum (3) the
-position Liberals give Republicans on the spectrum (4) the position
-Conservatives give Republicans on the spectrum
-
-Step 3: Now, we use those 4 columns to create the spread, meaning the
-absolute value of the difference betweeen:
-
-\begin{enumerate}
-\def\labelenumi{(\arabic{enumi})}
-\item
-  The position Liberals give Democrats on the spectrum and the position
-  Conservatives give Democrats on the spectrum
-\item
-  The position Liberals give Republicans on the spectrum and the
-  position Conservatives give Republicans on the spectrum
-\end{enumerate}
-
-Step 4: Now, we graph those differences and interpret these spreads as
-an indicator of polarization. We acknowledge that this is too simple an
-analysis to account for the full complexity of this kind of measurement,
-as polarization involves not just distance between extremes, but also
-clustering around them. We also acknowledge that our political scale
-assumes a linear ideological spectrum, which isn't always the case.
-
-Step 5: We merge the two datasets together on ``US State 2''. Note that
-this merged dataset could be misleading, because some of the merged
-variables only apply to the ``extreme'' respondents in each state, and
-so it's not representative of the entire state's respondents'
-positioning of different parties. We've dropped those variables from the
-merge to try to account for this.
-
-Step 6: We merge the AmeriCorps CEV/VCL data with the spread data so far
-
-Step 7: We create a function for viewing Political Engagement alongside
-spread, one generating a table with 2 states for comparison, and another
-2 returning graphs
-
-Below is an example of using our function to generate a political
-engagement score for different states:
-
-\begin{verbatim}
-   US State  political_engagement_score  Spread_Dem  Spread_Repub
-13       IL                   27.038567    1.409091      0.196970
-36       OR                   37.203540    2.454545      2.393939
-\end{verbatim}
-
-And below are sample static graphs on Democratic and Republican
-positions:
-
-\begin{verbatim}
-alt.Chart(...)
-\end{verbatim}
-
-\begin{verbatim}
-alt.Chart(...)
-\end{verbatim}
-
-\begin{verbatim}
-alt.Chart(...)
-\end{verbatim}
-
-\begin{verbatim}
-alt.Chart(...)
-\end{verbatim}
-
-Below is a atatic graph of ideological position in the US nationally as
-of 2020:
-
-\begin{verbatim}
-ImportError: The "vegafusion" data transformer and chart.transformed_data feature requires
-version 1.5.0 or greater of the 'vegafusion-python-embed' and 'vegafusion' packages.
-These can be installed with pip using:
-    pip install "vegafusion[embed]>=1.5.0"
-Or with conda using:
-    conda install -c conda-forge "vegafusion-python-embed>=1.5.0" "vegafusion>=1.5.0"
-
-ImportError: No module named 'vegafusion'
-[0;31m---------------------------------------------------------------------------[0m
-[0;31mModuleNotFoundError[0m                       Traceback (most recent call last)
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_importers.py:15[0m, in [0;36mimport_vegafusion[0;34m()[0m
-[1;32m     14[0m [38;5;28;01mtry[39;00m:
-[0;32m---> 15[0m     [38;5;28;01mimport[39;00m [38;5;21;01mvegafusion[39;00m [38;5;28;01mas[39;00m [38;5;21;01mvf[39;00m
-[1;32m     17[0m     version [38;5;241m=[39m importlib_version([38;5;124m"[39m[38;5;124mvegafusion[39m[38;5;124m"[39m)
-
-[0;31mModuleNotFoundError[0m: No module named 'vegafusion'
-
-The above exception was the direct cause of the following exception:
-
-[0;31mImportError[0m                               Traceback (most recent call last)
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/IPython/core/formatters.py:1036[0m, in [0;36mMimeBundleFormatter.__call__[0;34m(self, obj, include, exclude)[0m
-[1;32m   1033[0m     method [38;5;241m=[39m get_real_method(obj, [38;5;28mself[39m[38;5;241m.[39mprint_method)
-[1;32m   1035[0m     [38;5;28;01mif[39;00m method [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
-[0;32m-> 1036[0m         [38;5;28;01mreturn[39;00m [43mmethod[49m[43m([49m[43minclude[49m[38;5;241;43m=[39;49m[43minclude[49m[43m,[49m[43m [49m[43mexclude[49m[38;5;241;43m=[39;49m[43mexclude[49m[43m)[49m
-[1;32m   1037[0m     [38;5;28;01mreturn[39;00m [38;5;28;01mNone[39;00m
-[1;32m   1038[0m [38;5;28;01melse[39;00m:
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/vegalite/v5/api.py:3682[0m, in [0;36mTopLevelMixin._repr_mimebundle_[0;34m(self, *args, **kwds)[0m
-[1;32m   3680[0m [38;5;28;01melse[39;00m:
-[1;32m   3681[0m     [38;5;28;01mif[39;00m renderer [38;5;241m:=[39m renderers[38;5;241m.[39mget():
-[0;32m-> 3682[0m         [38;5;28;01mreturn[39;00m [43mrenderer[49m[43m([49m[43mdct[49m[43m)[49m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/display.py:232[0m, in [0;36mHTMLRenderer.__call__[0;34m(self, spec, **metadata)[0m
-[1;32m    230[0m kwargs [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mkwargs[38;5;241m.[39mcopy()
-[1;32m    231[0m kwargs[38;5;241m.[39mupdate([38;5;241m*[39m[38;5;241m*[39mmetadata, output_div[38;5;241m=[39m[38;5;28mself[39m[38;5;241m.[39moutput_div)
-[0;32m--> 232[0m [38;5;28;01mreturn[39;00m [43mspec_to_mimebundle[49m[43m([49m[43mspec[49m[43m,[49m[43m [49m[38;5;28;43mformat[39;49m[38;5;241;43m=[39;49m[38;5;124;43m"[39;49m[38;5;124;43mhtml[39;49m[38;5;124;43m"[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/mimebundle.py:129[0m, in [0;36mspec_to_mimebundle[0;34m(spec, format, mode, vega_version, vegaembed_version, vegalite_version, embed_options, engine, **kwargs)[0m
-[1;32m    127[0m internal_mode: Literal[[38;5;124m"[39m[38;5;124mvega-lite[39m[38;5;124m"[39m, [38;5;124m"[39m[38;5;124mvega[39m[38;5;124m"[39m] [38;5;241m=[39m mode
-[1;32m    128[0m [38;5;28;01mif[39;00m using_vegafusion():
-[0;32m--> 129[0m     spec [38;5;241m=[39m [43mcompile_with_vegafusion[49m[43m([49m[43mspec[49m[43m)[49m
-[1;32m    130[0m     internal_mode [38;5;241m=[39m [38;5;124m"[39m[38;5;124mvega[39m[38;5;124m"[39m
-[1;32m    132[0m [38;5;66;03m# Default to the embed options set by alt.renderers.set_embed_options[39;00m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_vegafusion_data.py:258[0m, in [0;36mcompile_with_vegafusion[0;34m(vegalite_spec)[0m
-[1;32m    255[0m [38;5;66;03m# Local import to avoid circular ImportError[39;00m
-[1;32m    256[0m [38;5;28;01mfrom[39;00m [38;5;21;01maltair[39;00m [38;5;28;01mimport[39;00m data_transformers, vegalite_compilers
-[0;32m--> 258[0m vf [38;5;241m=[39m [43mimport_vegafusion[49m[43m([49m[43m)[49m
-[1;32m    260[0m [38;5;66;03m# Compile Vega-Lite spec to Vega[39;00m
-[1;32m    261[0m compiler [38;5;241m=[39m vegalite_compilers[38;5;241m.[39mget()
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_importers.py:44[0m, in [0;36mimport_vegafusion[0;34m()[0m
-[1;32m     33[0m [38;5;28;01mexcept[39;00m [38;5;167;01mImportError[39;00m [38;5;28;01mas[39;00m err:
-[1;32m     34[0m     msg [38;5;241m=[39m (
-[1;32m     35[0m         [38;5;124m'[39m[38;5;124mThe [39m[38;5;124m"[39m[38;5;124mvegafusion[39m[38;5;124m"[39m[38;5;124m data transformer and chart.transformed_data feature requires[39m[38;5;130;01m\n[39;00m[38;5;124m'[39m
-[1;32m     36[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124mversion [39m[38;5;132;01m{[39;00mmin_version[38;5;132;01m}[39;00m[38;5;124m or greater of the [39m[38;5;124m'[39m[38;5;124mvegafusion-python-embed[39m[38;5;124m'[39m[38;5;124m and [39m[38;5;124m'[39m[38;5;124mvegafusion[39m[38;5;124m'[39m[38;5;124m packages.[39m[38;5;130;01m\n[39;00m[38;5;124m"[39m
-[0;32m   (...)[0m
-[1;32m     42[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124mImportError: [39m[38;5;132;01m{[39;00merr[38;5;241m.[39margs[[38;5;241m0[39m][38;5;132;01m}[39;00m[38;5;124m"[39m
-[1;32m     43[0m     )
-[0;32m---> 44[0m     [38;5;28;01mraise[39;00m [38;5;167;01mImportError[39;00m(msg) [38;5;28;01mfrom[39;00m [38;5;21;01merr[39;00m
-
-[0;31mImportError[0m: The "vegafusion" data transformer and chart.transformed_data feature requires
-version 1.5.0 or greater of the 'vegafusion-python-embed' and 'vegafusion' packages.
-These can be installed with pip using:
-    pip install "vegafusion[embed]>=1.5.0"
-Or with conda using:
-    conda install -c conda-forge "vegafusion-python-embed>=1.5.0" "vegafusion>=1.5.0"
-
-ImportError: No module named 'vegafusion'
-\end{verbatim}
-
-\begin{verbatim}
-alt.Chart(...)
-\end{verbatim}
-
-Note: We removed non-responses, likely creating a bias in the relative
-size of the remaining groups (it's difficult to predict the direction of
-said bias, however.)
-
-Additionally, below is a sample static graph of ideological position by
-state, using IL as an example:
-
-\begin{verbatim}
-ImportError: The "vegafusion" data transformer and chart.transformed_data feature requires
-version 1.5.0 or greater of the 'vegafusion-python-embed' and 'vegafusion' packages.
-These can be installed with pip using:
-    pip install "vegafusion[embed]>=1.5.0"
-Or with conda using:
-    conda install -c conda-forge "vegafusion-python-embed>=1.5.0" "vegafusion>=1.5.0"
-
-ImportError: No module named 'vegafusion'
-[0;31m---------------------------------------------------------------------------[0m
-[0;31mModuleNotFoundError[0m                       Traceback (most recent call last)
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_importers.py:15[0m, in [0;36mimport_vegafusion[0;34m()[0m
-[1;32m     14[0m [38;5;28;01mtry[39;00m:
-[0;32m---> 15[0m     [38;5;28;01mimport[39;00m [38;5;21;01mvegafusion[39;00m [38;5;28;01mas[39;00m [38;5;21;01mvf[39;00m
-[1;32m     17[0m     version [38;5;241m=[39m importlib_version([38;5;124m"[39m[38;5;124mvegafusion[39m[38;5;124m"[39m)
-
-[0;31mModuleNotFoundError[0m: No module named 'vegafusion'
-
-The above exception was the direct cause of the following exception:
-
-[0;31mImportError[0m                               Traceback (most recent call last)
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/IPython/core/formatters.py:1036[0m, in [0;36mMimeBundleFormatter.__call__[0;34m(self, obj, include, exclude)[0m
-[1;32m   1033[0m     method [38;5;241m=[39m get_real_method(obj, [38;5;28mself[39m[38;5;241m.[39mprint_method)
-[1;32m   1035[0m     [38;5;28;01mif[39;00m method [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
-[0;32m-> 1036[0m         [38;5;28;01mreturn[39;00m [43mmethod[49m[43m([49m[43minclude[49m[38;5;241;43m=[39;49m[43minclude[49m[43m,[49m[43m [49m[43mexclude[49m[38;5;241;43m=[39;49m[43mexclude[49m[43m)[49m
-[1;32m   1037[0m     [38;5;28;01mreturn[39;00m [38;5;28;01mNone[39;00m
-[1;32m   1038[0m [38;5;28;01melse[39;00m:
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/vegalite/v5/api.py:3682[0m, in [0;36mTopLevelMixin._repr_mimebundle_[0;34m(self, *args, **kwds)[0m
-[1;32m   3680[0m [38;5;28;01melse[39;00m:
-[1;32m   3681[0m     [38;5;28;01mif[39;00m renderer [38;5;241m:=[39m renderers[38;5;241m.[39mget():
-[0;32m-> 3682[0m         [38;5;28;01mreturn[39;00m [43mrenderer[49m[43m([49m[43mdct[49m[43m)[49m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/display.py:232[0m, in [0;36mHTMLRenderer.__call__[0;34m(self, spec, **metadata)[0m
-[1;32m    230[0m kwargs [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mkwargs[38;5;241m.[39mcopy()
-[1;32m    231[0m kwargs[38;5;241m.[39mupdate([38;5;241m*[39m[38;5;241m*[39mmetadata, output_div[38;5;241m=[39m[38;5;28mself[39m[38;5;241m.[39moutput_div)
-[0;32m--> 232[0m [38;5;28;01mreturn[39;00m [43mspec_to_mimebundle[49m[43m([49m[43mspec[49m[43m,[49m[43m [49m[38;5;28;43mformat[39;49m[38;5;241;43m=[39;49m[38;5;124;43m"[39;49m[38;5;124;43mhtml[39;49m[38;5;124;43m"[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/mimebundle.py:129[0m, in [0;36mspec_to_mimebundle[0;34m(spec, format, mode, vega_version, vegaembed_version, vegalite_version, embed_options, engine, **kwargs)[0m
-[1;32m    127[0m internal_mode: Literal[[38;5;124m"[39m[38;5;124mvega-lite[39m[38;5;124m"[39m, [38;5;124m"[39m[38;5;124mvega[39m[38;5;124m"[39m] [38;5;241m=[39m mode
-[1;32m    128[0m [38;5;28;01mif[39;00m using_vegafusion():
-[0;32m--> 129[0m     spec [38;5;241m=[39m [43mcompile_with_vegafusion[49m[43m([49m[43mspec[49m[43m)[49m
-[1;32m    130[0m     internal_mode [38;5;241m=[39m [38;5;124m"[39m[38;5;124mvega[39m[38;5;124m"[39m
-[1;32m    132[0m [38;5;66;03m# Default to the embed options set by alt.renderers.set_embed_options[39;00m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_vegafusion_data.py:258[0m, in [0;36mcompile_with_vegafusion[0;34m(vegalite_spec)[0m
-[1;32m    255[0m [38;5;66;03m# Local import to avoid circular ImportError[39;00m
-[1;32m    256[0m [38;5;28;01mfrom[39;00m [38;5;21;01maltair[39;00m [38;5;28;01mimport[39;00m data_transformers, vegalite_compilers
-[0;32m--> 258[0m vf [38;5;241m=[39m [43mimport_vegafusion[49m[43m([49m[43m)[49m
-[1;32m    260[0m [38;5;66;03m# Compile Vega-Lite spec to Vega[39;00m
-[1;32m    261[0m compiler [38;5;241m=[39m vegalite_compilers[38;5;241m.[39mget()
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_importers.py:44[0m, in [0;36mimport_vegafusion[0;34m()[0m
-[1;32m     33[0m [38;5;28;01mexcept[39;00m [38;5;167;01mImportError[39;00m [38;5;28;01mas[39;00m err:
-[1;32m     34[0m     msg [38;5;241m=[39m (
-[1;32m     35[0m         [38;5;124m'[39m[38;5;124mThe [39m[38;5;124m"[39m[38;5;124mvegafusion[39m[38;5;124m"[39m[38;5;124m data transformer and chart.transformed_data feature requires[39m[38;5;130;01m\n[39;00m[38;5;124m'[39m
-[1;32m     36[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124mversion [39m[38;5;132;01m{[39;00mmin_version[38;5;132;01m}[39;00m[38;5;124m or greater of the [39m[38;5;124m'[39m[38;5;124mvegafusion-python-embed[39m[38;5;124m'[39m[38;5;124m and [39m[38;5;124m'[39m[38;5;124mvegafusion[39m[38;5;124m'[39m[38;5;124m packages.[39m[38;5;130;01m\n[39;00m[38;5;124m"[39m
-[0;32m   (...)[0m
-[1;32m     42[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124mImportError: [39m[38;5;132;01m{[39;00merr[38;5;241m.[39margs[[38;5;241m0[39m][38;5;132;01m}[39;00m[38;5;124m"[39m
-[1;32m     43[0m     )
-[0;32m---> 44[0m     [38;5;28;01mraise[39;00m [38;5;167;01mImportError[39;00m(msg) [38;5;28;01mfrom[39;00m [38;5;21;01merr[39;00m
-
-[0;31mImportError[0m: The "vegafusion" data transformer and chart.transformed_data feature requires
-version 1.5.0 or greater of the 'vegafusion-python-embed' and 'vegafusion' packages.
-These can be installed with pip using:
-    pip install "vegafusion[embed]>=1.5.0"
-Or with conda using:
-    conda install -c conda-forge "vegafusion-python-embed>=1.5.0" "vegafusion>=1.5.0"
-
-ImportError: No module named 'vegafusion'
-\end{verbatim}
-
-\begin{verbatim}
-alt.Chart(...)
-\end{verbatim}
-
-Lastly, we will use the merged AmeriCorps and ANES data to plot a
-correlation between volunteer hours and political engagement:
-
-\begin{verbatim}
-ImportError: The "vegafusion" data transformer and chart.transformed_data feature requires
-version 1.5.0 or greater of the 'vegafusion-python-embed' and 'vegafusion' packages.
-These can be installed with pip using:
-    pip install "vegafusion[embed]>=1.5.0"
-Or with conda using:
-    conda install -c conda-forge "vegafusion-python-embed>=1.5.0" "vegafusion>=1.5.0"
-
-ImportError: No module named 'vegafusion'
-[0;31m---------------------------------------------------------------------------[0m
-[0;31mModuleNotFoundError[0m                       Traceback (most recent call last)
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_importers.py:15[0m, in [0;36mimport_vegafusion[0;34m()[0m
-[1;32m     14[0m [38;5;28;01mtry[39;00m:
-[0;32m---> 15[0m     [38;5;28;01mimport[39;00m [38;5;21;01mvegafusion[39;00m [38;5;28;01mas[39;00m [38;5;21;01mvf[39;00m
-[1;32m     17[0m     version [38;5;241m=[39m importlib_version([38;5;124m"[39m[38;5;124mvegafusion[39m[38;5;124m"[39m)
-
-[0;31mModuleNotFoundError[0m: No module named 'vegafusion'
-
-The above exception was the direct cause of the following exception:
-
-[0;31mImportError[0m                               Traceback (most recent call last)
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/IPython/core/formatters.py:1036[0m, in [0;36mMimeBundleFormatter.__call__[0;34m(self, obj, include, exclude)[0m
-[1;32m   1033[0m     method [38;5;241m=[39m get_real_method(obj, [38;5;28mself[39m[38;5;241m.[39mprint_method)
-[1;32m   1035[0m     [38;5;28;01mif[39;00m method [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
-[0;32m-> 1036[0m         [38;5;28;01mreturn[39;00m [43mmethod[49m[43m([49m[43minclude[49m[38;5;241;43m=[39;49m[43minclude[49m[43m,[49m[43m [49m[43mexclude[49m[38;5;241;43m=[39;49m[43mexclude[49m[43m)[49m
-[1;32m   1037[0m     [38;5;28;01mreturn[39;00m [38;5;28;01mNone[39;00m
-[1;32m   1038[0m [38;5;28;01melse[39;00m:
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/vegalite/v5/api.py:3682[0m, in [0;36mTopLevelMixin._repr_mimebundle_[0;34m(self, *args, **kwds)[0m
-[1;32m   3680[0m [38;5;28;01melse[39;00m:
-[1;32m   3681[0m     [38;5;28;01mif[39;00m renderer [38;5;241m:=[39m renderers[38;5;241m.[39mget():
-[0;32m-> 3682[0m         [38;5;28;01mreturn[39;00m [43mrenderer[49m[43m([49m[43mdct[49m[43m)[49m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/display.py:232[0m, in [0;36mHTMLRenderer.__call__[0;34m(self, spec, **metadata)[0m
-[1;32m    230[0m kwargs [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mkwargs[38;5;241m.[39mcopy()
-[1;32m    231[0m kwargs[38;5;241m.[39mupdate([38;5;241m*[39m[38;5;241m*[39mmetadata, output_div[38;5;241m=[39m[38;5;28mself[39m[38;5;241m.[39moutput_div)
-[0;32m--> 232[0m [38;5;28;01mreturn[39;00m [43mspec_to_mimebundle[49m[43m([49m[43mspec[49m[43m,[49m[43m [49m[38;5;28;43mformat[39;49m[38;5;241;43m=[39;49m[38;5;124;43m"[39;49m[38;5;124;43mhtml[39;49m[38;5;124;43m"[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/mimebundle.py:129[0m, in [0;36mspec_to_mimebundle[0;34m(spec, format, mode, vega_version, vegaembed_version, vegalite_version, embed_options, engine, **kwargs)[0m
-[1;32m    127[0m internal_mode: Literal[[38;5;124m"[39m[38;5;124mvega-lite[39m[38;5;124m"[39m, [38;5;124m"[39m[38;5;124mvega[39m[38;5;124m"[39m] [38;5;241m=[39m mode
-[1;32m    128[0m [38;5;28;01mif[39;00m using_vegafusion():
-[0;32m--> 129[0m     spec [38;5;241m=[39m [43mcompile_with_vegafusion[49m[43m([49m[43mspec[49m[43m)[49m
-[1;32m    130[0m     internal_mode [38;5;241m=[39m [38;5;124m"[39m[38;5;124mvega[39m[38;5;124m"[39m
-[1;32m    132[0m [38;5;66;03m# Default to the embed options set by alt.renderers.set_embed_options[39;00m
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_vegafusion_data.py:258[0m, in [0;36mcompile_with_vegafusion[0;34m(vegalite_spec)[0m
-[1;32m    255[0m [38;5;66;03m# Local import to avoid circular ImportError[39;00m
-[1;32m    256[0m [38;5;28;01mfrom[39;00m [38;5;21;01maltair[39;00m [38;5;28;01mimport[39;00m data_transformers, vegalite_compilers
-[0;32m--> 258[0m vf [38;5;241m=[39m [43mimport_vegafusion[49m[43m([49m[43m)[49m
-[1;32m    260[0m [38;5;66;03m# Compile Vega-Lite spec to Vega[39;00m
-[1;32m    261[0m compiler [38;5;241m=[39m vegalite_compilers[38;5;241m.[39mget()
-
-File [0;32m~/Documents/GitHub/student30538/problem_sets/final_project/venv/lib/python3.13/site-packages/altair/utils/_importers.py:44[0m, in [0;36mimport_vegafusion[0;34m()[0m
-[1;32m     33[0m [38;5;28;01mexcept[39;00m [38;5;167;01mImportError[39;00m [38;5;28;01mas[39;00m err:
-[1;32m     34[0m     msg [38;5;241m=[39m (
-[1;32m     35[0m         [38;5;124m'[39m[38;5;124mThe [39m[38;5;124m"[39m[38;5;124mvegafusion[39m[38;5;124m"[39m[38;5;124m data transformer and chart.transformed_data feature requires[39m[38;5;130;01m\n[39;00m[38;5;124m'[39m
-[1;32m     36[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124mversion [39m[38;5;132;01m{[39;00mmin_version[38;5;132;01m}[39;00m[38;5;124m or greater of the [39m[38;5;124m'[39m[38;5;124mvegafusion-python-embed[39m[38;5;124m'[39m[38;5;124m and [39m[38;5;124m'[39m[38;5;124mvegafusion[39m[38;5;124m'[39m[38;5;124m packages.[39m[38;5;130;01m\n[39;00m[38;5;124m"[39m
-[0;32m   (...)[0m
-[1;32m     42[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124mImportError: [39m[38;5;132;01m{[39;00merr[38;5;241m.[39margs[[38;5;241m0[39m][38;5;132;01m}[39;00m[38;5;124m"[39m
-[1;32m     43[0m     )
-[0;32m---> 44[0m     [38;5;28;01mraise[39;00m [38;5;167;01mImportError[39;00m(msg) [38;5;28;01mfrom[39;00m [38;5;21;01merr[39;00m
-
-[0;31mImportError[0m: The "vegafusion" data transformer and chart.transformed_data feature requires
-version 1.5.0 or greater of the 'vegafusion-python-embed' and 'vegafusion' packages.
-These can be installed with pip using:
-    pip install "vegafusion[embed]>=1.5.0"
-Or with conda using:
-    conda install -c conda-forge "vegafusion-python-embed>=1.5.0" "vegafusion>=1.5.0"
-
-ImportError: No module named 'vegafusion'
-\end{verbatim}
-
-\begin{verbatim}
-alt.Chart(...)
-\end{verbatim}
-
-This shows a noted positive correlation between volunteer hours and
-political engagement. However, as we'll see, this doesn't necessarily
-imply that increasing volunteering will lead to higher civic engagement.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\setcounter{enumi}{3}
-\tightlist
-\item
-  Reproductibility (10\%)
-
-  \begin{itemize}
-  \tightlist
-  \item
-    The project and files should be structured and documented so that
-    the TAs can clone your repository and reproduce your results (see
-    ``Final Repository'' below) by knitting your \texttt{.qmd} and, if
-    needed, downloading the dataset(s) you use using the link provided
-    in the \texttt{.qmd} comments
-  \end{itemize}
-\item
-  Git (10\%)
-
-  \begin{itemize}
-  \tightlist
-  \item
-    You should submit your project as a Git repository.
-  \item
-    Create multiple branches as you work for different pieces of the
-    analysis. Branches may correspond to work done by different partners
-    or to different features if you are working alone.
-  \item
-    Your final repository should have one branch: \texttt{main}
-  \item
-    We reserve the right to check the git commit history to ensure that
-    all members have contributed to the project.
-  \end{itemize}
-\item
-  Extra credit: text processing (up to 10\%)
-
-  \begin{itemize}
-  \tightlist
-  \item
-    Introduce some form of text analysis using natural language
-    processing methods discussed in class.
-  \end{itemize}
-\end{enumerate}
-
-\subsection{Writeup (15\%)}\label{writeup-15}
-
-\begin{itemize}
-\tightlist
-\item
-  You will then spend \emph{no more than 3 pages} writing up your
-  project.
-\item
-  The primary purpose of this writeup is to inform us of what we are
-  reading before we look at your code.
-\item
-  You should describe your research question, then discuss the approach
-  you took and the coding involved, including discussing any weaknesses
-  or difficulties encountered.
-\item
-  Display your static plots, and briefly describe them and your Shiny
-  app. Discuss the policy implications of your findings.
-\item
-  Finish with a discussion of directions for future work.
-\item
-  The top of your writeup should include the names of all group members,
-  their respective sections, and Github user names.
-\end{itemize}
-
-\subsection{Presentation (15\%)}\label{presentation-15}
-
-\begin{itemize}
-\tightlist
-\item
-  On the day of the presentation, one of the group members will be
-  \emph{randomly selected} to give a \emph{8-minute in-class
-  presentation}. All group members must be present.
-\item
-  Any group member who is not present will receive an automatic 0 for
-  the presentation portion of the final project.
-\item
-  The presentation will be of slides that largely mirror the structure
-  of the writeup, but will be more focused on discussing the research
-  question and results as opposed to explaining the details of the
-  coding.
-\end{itemize}
-
-\section{Final Repository}\label{final-repository}
-
-Your final repository must contain the following:
-
-\begin{itemize}
-\tightlist
-\item
-  Documentation and Meta-data
-
-  \begin{itemize}
-  \tightlist
-  \item
-    A \texttt{requirements.txt} file
-  \item
-    A \texttt{.gitignore} file that ignores unneeded files
-    (e.g.~\texttt{venv})
-  \end{itemize}
-\item
-  Writeup: a user should be able to knit your \texttt{.qmd} file and
-  re-generate the HTML version of your writeup
-
-  \begin{itemize}
-  \tightlist
-  \item
-    The \texttt{.qmd} file associated with your write-up
-  \item
-    An HTML and PDF'd version of your writeup
-  \item
-    A folder named \texttt{pictures} that contains the files for any
-    pictures required to knit your writeup
-  \end{itemize}
-\item
-  Data
-
-  \begin{itemize}
-  \tightlist
-  \item
-    A folder named \texttt{data} that contains the initial, unmodified
-    dataframes you download and the final versions of the dataframe(s)
-    you built.
-  \item
-    If the dataset is greater than 100MB, it can hosted on Drive or
-    Dropbox and the link should be provided in your .\texttt{qmd} file
-    as a comment
-  \end{itemize}
-\item
-  Shiny app
-
-  \begin{itemize}
-  \tightlist
-  \item
-    A folder named \texttt{shiny-app} that contains the code and any
-    additional files needed to deploy your app
-  \item
-    A user should be able to deploy your app directly from the command
-    line within this folder
-  \end{itemize}
-\end{itemize}
-
-\section{Key Dates}\label{key-dates}
-
-\begin{itemize}
-\tightlist
-\item
-  By November 1
-
-  \begin{itemize}
-  \tightlist
-  \item
-    Proposal submitted to Canvas quiz
-  \item
-    (Optional) meeting with Professor Ganong, Professor Shi, or Head TA
-    Ozzy Houck
-  \item
-    Sign up for presentation slot
-  \end{itemize}
-\item
-  December 2- December 5: in-class presentations
-\item
-  December 7, 5PM: final repository submitted via Gradescope
-\end{itemize}
+\section{the following chart is total number of volunteers per state and
+stacked by volunteer
+frequency}\label{the-following-chart-is-total-number-of-volunteers-per-state-and-stacked-by-volunteer-frequency}
+
+\section{same as above except now if person contacted public
+official}\label{same-as-above-except-now-if-person-contacted-public-official}
 
 
 

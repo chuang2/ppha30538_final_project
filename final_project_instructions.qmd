@@ -2,10 +2,19 @@
 title: "30538 Final Project: Reproducible Research - Volunteerism, Engagement, and Polarization in the U.S."
 author: "Andrew White, Charles Huang, Justine Silverstein" 
 date: "December 7, 2024"
-format: pdf
+format: 
+    pdf:
+        colorlinks: false
+        keep-tex: true  
+
 execute:
-  echo: false
-  warning: false
+    echo: false
+    warning: false
+    error: false
+    ansi: false
+    strip-ansi: true
+    include: false 
+    output: false
 ---
 
 
@@ -127,11 +136,11 @@ As part of our exploratory analysis, we also ran a groupby on state-level data t
 
 We want to highlight two charts out of the ones we produced. The first chart depicts the top and bottom five states by average hours spent volunteering:
 
-![Top 5 and Bottom 5 US States by average hours spent volunteering]('top_bottom_5_states_avg_volunteering.png')
+![Top 5 and Bottom 5 US States by average hours spent volunteering](top_bottom_5_states_avg_volunteering.png)
 
 The second chart depicts volunteering frequency when measured against voters and nonvoters:
 
-![Volunteering Frequency for Voters and Non-Voters]('if_volunteered_last_year.png')
+![Volunteering Frequency for Voters and Non-Voters](if_volunteered_last_year.png)
 
 An interesting point from our exploratory analysis is that in each volunteering category, the majority of people did vote in their local election. However, it is unclear if this is simply correlation, as AmeriCorps may disproportionately attract the kind of person already primed to vote in their local election and be politically engaged. We will engage this question of correlation further with our Shiny app results. 
 
@@ -592,53 +601,58 @@ def seek_polar(df, state):
     mod_df = find_share(df, state)
     mod_df = mod_df.groupby(
         "Party_Affiliation_(V201228)"
-        )[["Outliers", "Party_Count"]].sum().reset_index()
+    )[["Outliers", "Party_Count"]].sum().reset_index()
 
-    mod_df["Percent_Outliers"] =  mod_df["Outliers"] / sum(mod_df["Party_Count"])
+    mod_df["Percent_Outliers"] = mod_df["Outliers"] / \
+        sum(mod_df["Party_Count"])
     return mod_df
 
-#Example with IL
+
 seek_polar(sub_polarization, "IL")
-
-
-
 ```
 
+```{python}
+# This will show ALL characters, including invisible ones
+with open('final_project_instructions.tex', 'rb') as f:
+    lines = f.readlines()
+    print("Content around line 611:")
+    for i in range(609, 613):
+        print(f"Line {i+1}: {bytes(lines[i]).hex()} | {lines[i].decode('utf-8', errors='replace')}")
+```
 
 ```{python}
-
 
 def find_share_state(df, state):
     '''
     Generates a modified subset of survey data for a given state, identifying partisans and ideological outliers.
 '''
-    #subset by state
+    # subset by state
     sub = df[df["US State 2"] == state]
     Party_People = ["Democrat", "Republican"]
     Conservatives = ["Slightly Conservative",
-    "Conservative",
-    "Extremely Conservative"]
+                     "Conservative",
+                     "Extremely Conservative"]
     Liberals = ["Extremely Liberal",
-    "Liberal", "Slightly Liberal"]
-    #count of partisans
+                "Liberal", "Slightly Liberal"]
+    # count of partisans
     Party_Count = []
-    #count of entries that are Dem but conservative or Repub but liberal
+    # count of entries that are Dem but conservative or Repub but liberal
     Outlier_box = []
-    #get Party_Count
+    # get Party_Count
     for index, entry in sub.iterrows():
-            if entry["Party_Affiliation_(V201228)"] in Party_People:
-                    Party_Count.append(1)
-            else:
-                    Party_Count.append(0)
-    
+        if entry["Party_Affiliation_(V201228)"] in Party_People:
+            Party_Count.append(1)
+        else:
+            Party_Count.append(0)
+
     for index, entry in sub.iterrows():
-            if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
-                    Outlier_box.append(1)
-            elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
-                    Outlier_box.append(1)
-            else:
-                    Outlier_box.append(0)
-    
+        if (entry["Ideology_(V201200)"] in Conservatives) & (entry["Party_Affiliation_(V201228)"] == "Democratic"):
+            Outlier_box.append(1)
+        elif (entry["Ideology_(V201200)"] in Liberals) & (entry["Party_Affiliation_(V201228)"] == "Republican"):
+            Outlier_box.append(1)
+        else:
+            Outlier_box.append(0)
+
     sub["Party_Count"] = Party_Count
     sub["Outliers"] = Outlier_box
     return sub
@@ -1067,26 +1081,27 @@ Repub_Graph_Spread_2.save('repub_graph_spread_2.png', format='png')
 ```
 
 
-Below is a atatic graph of ideological position in the US nationally as of 2020:
 
 ```{python}
-alt.data_transformers.enable("vegafusion")
-#create list for graph to sort on 
-sorting_list = [
-        "Refused", "Don't Know", "Extremely Liberal",
-        "Liberal", "Slightly Liberal", 
-        "Moderate; middle of the road",
-        "Slightly Conservative",
-        "Conservative",
-        "Extremely Conservative",
-        "Haven’t thought much about this"
-    ]
+# Below is a atatic graph of ideological position in the US nationally as of 2020
 
-#filter out non-responses
+alt.data_transformers.enable("vegafusion")
+# create list for graph to sort on
+sorting_list = [
+    "Refused", "Don't Know", "Extremely Liberal",
+    "Liberal", "Slightly Liberal",
+    "Moderate; middle of the road",
+    "Slightly Conservative",
+    "Conservative",
+    "Extremely Conservative",
+    "Haven’t thought much about this"
+]
+
+# filter out non-responses
 global_non_response_list = [
     "Haven’t thought much about this",
     "Refused", "Don't Know"
-    ]
+]
 
 local_filter = sub_polarization[
     ~sub_polarization["Ideology_(V201200)"].isin(global_non_response_list)
@@ -1094,18 +1109,18 @@ local_filter = sub_polarization[
 
 Ideological_Position_US = alt.Chart(local_filter).mark_bar().encode(
     alt.X(
-        "Ideology_(V201200):N", 
-        title = "Ideological Position",
-        sort = sorting_list),
-    alt.Y("Observations", title = "Number of Respondents"),
-    alt.Color("Ideology_(V201200)", sort = sorting_list)
-).properties(title = alt.TitleParams(
-            f"Ideological Position in the U.S."
-        ))
+        "Ideology_(V201200):N",
+        title="Ideological Position",
+        sort=sorting_list),
+    alt.Y("Observations", title="Number of Respondents"),
+    alt.Color("Ideology_(V201200)", sort=sorting_list)
+).properties(title=alt.TitleParams(
+    f"Ideological Position in the U.S."
+))
 
 Ideological_Position_US.show()
 
-#Note: We removed non-responses, likely creating a bias in the relative size of the remaining groups (it's difficult to predict the direction of said bias, however.)
+# Note: We removed non-responses, likely creating a bias in the relative size of the remaining groups (it's difficult to predict the direction of said bias, however.)
 ```
 
 
@@ -1181,26 +1196,33 @@ Correlation_Graph.show()
 
 ```{python}
 
-#Below is the exploratory data analysis (h/t Justine)
+# Below is the exploratory data analysis (h/t Justine)
 
 # Basic plot to show Frequency of Volunteering Categories
+
+from altair import data_transformers
+data_transformers.disable_max_rows()  # Disable row limit
+data_transformers.enable('default')  # Disables vegafusion
+
 
 filtered_data = cev_all_2021_filter[
     (cev_all_2021_filter['Volunteering_Frequency'] != "Not in Universe") &
     (cev_all_2021_filter['Volunteering_Frequency'].notna()) &
     (cev_all_2021_filter['Volunteering_Frequency'] != "No Answer") &
     (cev_all_2021_filter['Volunteering_Frequency'] != "Refusal") &
-    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know")  
+    (cev_all_2021_filter['Volunteering_Frequency'] != "Do Not Know")
 ]
 
-frequency_counts = filtered_data['Volunteering_Frequency'].value_counts().reset_index()
+frequency_counts = filtered_data['Volunteering_Frequency'].value_counts(
+).reset_index()
 frequency_counts.columns = ['Volunteering_Frequency', 'Frequency']
 
 chart = alt.Chart(frequency_counts).mark_bar().encode(
-    y=alt.Y('Volunteering_Frequency:O', title='Frequency Count'),  
-    x=alt.X('Frequency:Q', title='Frequency Count'),  
-    color=alt.Color('Frequency:Q', scale=alt.Scale(scheme='blues'), title='Volunteering Frequency'),  
-    tooltip=['Volunteering_Frequency', 'Frequency']  
+    y=alt.Y('Volunteering_Frequency:O', title='Frequency Count'),
+    x=alt.X('Frequency:Q', title='Frequency Count'),
+    color=alt.Color('Frequency:Q', scale=alt.Scale(
+        scheme='blues'), title='Volunteering Frequency'),
+    tooltip=['Volunteering_Frequency', 'Frequency']
 ).properties(
     title='Frequency of Volunteering Categories (Excluding "No Answer")',
     width=550,
@@ -1458,8 +1480,11 @@ average_hours_per_states = average_hours_per_state.sort_values(
 ```
 
 
+
+
 ```{python}
 # using the above data to show the top and bottom 5 states when it comes to average hours of volunteering
+
 
 top_bottom_states = pd.concat([average_hours_per_state.nlargest(
     5, 'Hours_Spent_Volunteering'), average_hours_per_state.nsmallest(5, 'Hours_Spent_Volunteering')])
@@ -1483,12 +1508,10 @@ chart = chart.properties(
 chart.show()
 chart.save('top_bottom_5_states_avg_volunteering.png', format='png')
 ```
-```
 
-
-```{python}
 
 # the following chart is total number of volunteers per state and stacked by volunteer frequency
+```{python}
 filtered_data = volunteering_frequencies.dropna(subset=['US State'])
 
 aggregated_data = filtered_data.groupby(['US State', 'Volunteering_Frequency']).size().reset_index(name='Count')
@@ -1519,9 +1542,8 @@ text = chart.mark_text(
 )
 
 final_chart = chart + text
-final_chart
-```
-```{python}
+final_chart.show()
+
 final_chart.save('number_volunteers_per_state.png', format='png')
 ```
 
